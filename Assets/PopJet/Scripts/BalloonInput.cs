@@ -1,0 +1,217 @@
+using System.Collections;
+using UnityEngine;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
+
+namespace PopJet
+{
+    /// <summary>Đọc con trỏ (chuột/chạm) bằng Input System mới hoặc cũ, tùy cấu hình project.</summary>
+    static class PointerHelper
+    {
+        public static bool Down, Held, Up;
+        public static Vector2 ScreenPos;
+
+        public static void Poll()
+        {
+#if ENABLE_INPUT_SYSTEM
+            var p = Pointer.current;
+            if (p == null) { Down = Held = Up = false; return; }
+            Down = p.press.wasPressedThisFrame;
+            Held = p.press.isPressed;
+            Up = p.press.wasReleasedThisFrame;
+            ScreenPos = p.position.ReadValue();
+#else
+            if (Input.touchCount > 0)
+            {
+                Touch t = Input.GetTouch(0);
+                Down = t.phase == TouchPhase.Began;
+                Up = t.phase == TouchPhase.Ended || t.phase == TouchPhase.Canceled;
+                Held = !Up;
+                ScreenPos = t.position;
+            }
+            else
+            {
+                Down = Input.GetMouseButtonDown(0);
+                Held = Input.GetMouseButton(0);
+                Up = Input.GetMouseButtonUp(0);
+                ScreenPos = Input.mousePosition;
+            }
+#endif
+        }
+    }
+
+    /// <summary>
+    /// Giữ - kéo - thả: ngón tay ở hướng nào thì cây kim hiện ở hướng đó và đâm lỗ ở đó;
+    /// bóng bay theo hướng ngược lại. Thả gần tâm bóng = hủy.
+    /// Sprite kim: đầu nhọn phải hướng lên (trục +Y local).
+    /// </summary>
+    public class BalloonInput : MonoBehaviour
+    {
+        [SerializeField] BalloonController balloon;
+        [Tooltip("Sprite cây kim (đầu nhọn hướng +Y). Có thể để trống.")]
+        [SerializeField] Transform needle;
+        [Tooltip("Mũi tên dự đoán hướng bay (LineRenderer 2 điểm, world space). Có thể để trống.")]
+        [SerializeField] LineRenderer flightArrow;
+        [Tooltip("Vùng chạm để bắt đầu giữ = Radius * hệ số này.")]
+        [SerializeField] float grabPadding = 1.4f;
+        [Tooltip("Vùng hủy = Radius * hệ số này (tính từ tâm bóng).")]
+        [SerializeField, Range(0.1f, 1f)] float cancelFactor = 0.4f;
+        [Tooltip("Khoảng cách kim cách mặt bóng khi đang ngắm.")]
+        [SerializeField] float needleGap = 0.6f;
+        [SerializeField] float arrowLength = 1.5f;
+        [SerializeField] float stabDuration = 0.08f;
+        [Tooltip("Đang giữ chọn hướng kim thì dừng toàn bộ thế giới (vật lý, quạt, cửa, particle, camera) bằng Time.timeScale = 0.\n" +
+                 "Thời gian chơi trong LevelManager dùng unscaled time nên vẫn đếm.")]
+        [SerializeField] bool freezeWorldWhileAiming = true;
+
+        Camera cam;
+        bool aiming;
+        bool cancelNow;
+        Vector2 needleDir = Vector2.up;
+        Coroutine stabRoutine;
+
+        void Awake()
+        {
+            cam = Camera.main;
+            HideAimVisuals();
+        }
+
+        void Update()
+        {
+            PointerHelper.Poll();
+            if (balloon == null || cam == null) return;
+
+            Vector2 world = ScreenToWorld(PointerHelper.ScreenPos);
+            Vector2 center = balloon.Center;
+
+            if (!aiming)
+            {
+                if (PointerHelper.Down && balloon.CanAim &&
+                    Vector2.Distance(world, center) <= balloon.Radius * grabPadding)
+                    BeginAim();
+                else
+                    return;
+            }
+
+            // Bóng hết khí / chạm đích trong lúc ngắm => hủy.
+            if (!balloon.CanAim) { EndAim(false); return; }
+
+            Vector2 d = world - center;
+            cancelNow = d.magnitude < balloon.Radius * cancelFactor;
+            if (!cancelNow) needleDir = d.normalized;
+
+            UpdateVisuals(center);
+
+            if (PointerHelper.Up)
+            {
+                EndAim(!cancelNow);
+            }
+            else if (!PointerHelper.Held)
+            {
+                EndAim(false); // mất focus/đứt chạm
+            }
+        }
+
+        void BeginAim()
+        {
+            aiming = true;
+            cancelNow = true;
+            balloon.SetAiming(true);
+            // Cú đâm kim trước đó chưa xong thì kết thúc luôn, tránh nó chạy tiếp sau khi thế giới chạy lại.
+            if (stabRoutine != null) { StopCoroutine(stabRoutine); stabRoutine = null; }
+            if (needle != null) needle.gameObject.SetActive(false);
+            SetWorldFrozen(true);
+        }
+
+        void EndAim(bool fire)
+        {
+            aiming = false;
+            SetWorldFrozen(false); // chạy lại trước khi chọc để lực đẩy áp dụng ngay
+            balloon.SetAiming(false);
+            if (flightArrow != null) flightArrow.enabled = false;
+
+            if (fire)
+            {
+                balloon.TryVent(-needleDir); // bay ngược hướng kim
+                if (needle != null)
+                {
+                    if (stabRoutine != null) StopCoroutine(stabRoutine);
+                    stabRoutine = StartCoroutine(Stab(needleDir));
+                    return;
+                }
+            }
+            if (needle != null) needle.gameObject.SetActive(false);
+        }
+
+        void SetWorldFrozen(bool frozen)
+        {
+            if (!freezeWorldWhileAiming) return;
+            Time.timeScale = frozen ? 0f : 1f;
+        }
+
+        // Không bao giờ để game kẹt ở timeScale 0 khi object bị tắt/hủy giữa lúc đang giữ (đổi scene, restart...).
+        void OnDisable()
+        {
+            if (aiming)
+            {
+                aiming = false;
+                if (balloon != null) balloon.SetAiming(false);
+                HideAimVisuals();
+            }
+            if (freezeWorldWhileAiming) Time.timeScale = 1f;
+        }
+
+        void UpdateVisuals(Vector2 center)
+        {
+            bool show = !cancelNow;
+            if (needle != null)
+            {
+                needle.gameObject.SetActive(show);
+                if (show)
+                {
+                    needle.position = center + needleDir * (balloon.Radius + needleGap);
+                    needle.up = -needleDir; // đầu kim chĩa vào bóng
+                }
+            }
+            if (flightArrow != null)
+            {
+                flightArrow.enabled = show;
+                if (show)
+                {
+                    flightArrow.positionCount = 2;
+                    flightArrow.SetPosition(0, center);
+                    flightArrow.SetPosition(1, center - needleDir * arrowLength);
+                }
+            }
+        }
+
+        IEnumerator Stab(Vector2 dir)
+        {
+            needle.gameObject.SetActive(true);
+            Vector3 from = needle.position;
+            float t = 0f;
+            while (t < stabDuration)
+            {
+                t += Time.deltaTime;
+                Vector3 to = balloon.Center + dir * balloon.Radius;
+                needle.position = Vector3.Lerp(from, to, Mathf.Clamp01(t / stabDuration));
+                yield return null;
+            }
+            needle.gameObject.SetActive(false);
+            stabRoutine = null;
+        }
+
+        void HideAimVisuals()
+        {
+            if (needle != null) needle.gameObject.SetActive(false);
+            if (flightArrow != null) flightArrow.enabled = false;
+        }
+
+        Vector2 ScreenToWorld(Vector2 screen)
+        {
+            float z = Mathf.Abs(cam.transform.position.z);
+            return cam.ScreenToWorldPoint(new Vector3(screen.x, screen.y, z));
+        }
+    }
+}

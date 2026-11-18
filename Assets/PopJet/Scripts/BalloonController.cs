@@ -1,0 +1,262 @@
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace PopJet
+{
+    public enum BalloonState { Floating, Aiming, Venting, Empty, Goal, Ready }
+
+    /// <summary>
+    /// Bóng bay: quản lý khí, lực đẩy khi chọc lỗ (vent) và lỗ rò (leak).
+    /// Lực đẩy giảm tuyến tính theo thời gian; lỗ rò tự đóng, hoặc được vá bằng PatchAll().
+    /// Mọi giá trị số là "starting value" - cần playtest để chỉnh.
+    /// </summary>
+    [RequireComponent(typeof(Rigidbody2D), typeof(CircleCollider2D))]
+    public class BalloonController : MonoBehaviour
+    {
+        [Header("Air")]
+        [SerializeField, Range(0.1f, 1f)] float startAir = 1f;
+        [Tooltip("Tỉ lệ scale khi hết khí (bóng xẹp dần).")]
+        [SerializeField, Range(0.2f, 1f)] float minScale = 0.55f;
+        [Tooltip("Hệ số lực khi khí gần cạn (1 = không giảm).")]
+        [SerializeField, Range(0.2f, 1f)] float minThrustWhenLow = 0.6f;
+
+        [Header("Player vent (starting values)")]
+        [SerializeField] float ventThrust = 6f;
+        [SerializeField] float ventDuration = 1.5f;
+        [Tooltip("Tổng khí mất cho mỗi lần chọc (0..1).")]
+        [SerializeField, Range(0.01f, 0.5f)] float ventAirCost = 0.18f;
+
+        [Header("Leak from spikes (starting values)")]
+        [SerializeField] float leakThrust = 1.8f;
+        [SerializeField] float leakDuration = 3f;
+        [Tooltip("Tổng khí mất cho mỗi lỗ rò (0..1).")]
+        [SerializeField, Range(0.005f, 0.3f)] float leakAirCost = 0.06f;
+        [Tooltip("Thời gian tối thiểu giữa 2 lỗ rò, chống spam khi trượt dọc thanh gai.")]
+        [SerializeField] float leakCooldown = 0.5f;
+        [SerializeField] int maxLeaks = 4;
+
+        [Header("Physics")]
+        [SerializeField] float damping = 1.5f;
+        [SerializeField] bool freezeRotation = true;
+        [Tooltip("true = hết khí thì bóng vỡ tung (đứng yên tại chỗ, BalloonFeedback lo hiệu ứng nổ và ẩn bóng).\n" +
+                 "false = bóng xẹp rồi rơi xuống với Empty Gravity Scale.")]
+        [SerializeField] bool popWhenEmpty = true;
+        [Tooltip("Chỉ dùng khi Pop When Empty tắt: trọng lực khi bóng xẹp rơi.")]
+        [SerializeField] float emptyGravityScale = 1.2f;
+        [Tooltip("Trọng lực sau khi đã bắt đầu chơi (lần chọc đầu tiên). Rất nhỏ = rơi cực chậm.\n" +
+                 "Vận tốc rơi tối đa ≈ 9.81 * giá trị này / Damping (0.05 => ~0.33 đơn vị/giây).")]
+        [SerializeField] float playGravityScale = 0.05f; // starting value
+
+        // holePosition, flyDirection
+        public event Action<Vector2, Vector2> VentStarted;
+        public event Action<Vector2, Vector2> LeakAdded;
+        public event Action PatchedUp;
+        public event Action BecameEmpty;
+        public event Action GoalReached;
+        /// <summary>Bắn ra một lần ở lần chọc đầu tiên: từ đây bóng bắt đầu rơi chậm.</summary>
+        public event Action GameStarted;
+
+        struct Jet
+        {
+            public Vector2 dir;
+            public float t;
+            public float duration;
+            public float thrust;
+            public float airCost;
+            public bool isLeak;
+        }
+
+        readonly List<Jet> jets = new List<Jet>();
+        Rigidbody2D rb;
+        CircleCollider2D circle;
+        float air;
+        float baseScale;
+        float lastLeakTime = -99f;
+        bool aiming;
+        bool empty;
+        bool goal;
+        bool started;
+
+        public float Air01 => air;
+        /// <summary>false = vừa load màn, bóng đứng im chờ người chơi chọc lần đầu.</summary>
+        public bool Started => started;
+        /// <summary>true = hết khí thì vỡ tung thay vì xẹp rơi.</summary>
+        public bool PopWhenEmpty => popWhenEmpty;
+        public Vector2 Center => transform.position;
+        public float Radius => circle.radius * transform.lossyScale.x;
+        public bool CanAim => !empty && !goal && air > 0f;
+        public bool HasLeaks => LeakCount > 0;
+        public int LeakCount { get { int n = 0; foreach (var j in jets) if (j.isLeak) n++; return n; } }
+        public int VentCount { get { int n = 0; foreach (var j in jets) if (!j.isLeak) n++; return n; } }
+
+        public BalloonState State
+        {
+            get
+            {
+                if (goal) return BalloonState.Goal;
+                if (empty) return BalloonState.Empty;
+                if (aiming) return BalloonState.Aiming;
+                if (!started) return BalloonState.Ready;
+                return VentCount > 0 ? BalloonState.Venting : BalloonState.Floating;
+            }
+        }
+
+        void Awake()
+        {
+            rb = GetComponent<Rigidbody2D>();
+            circle = GetComponent<CircleCollider2D>();
+            rb.bodyType = RigidbodyType2D.Dynamic;
+            rb.gravityScale = 0f;
+            rb.freezeRotation = freezeRotation;
+            rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+            SetDamping(damping);
+            baseScale = transform.localScale.x;
+            air = startAir;
+            ApplyScale();
+        }
+
+        // ---------- Public API ----------
+
+        public void SetAiming(bool value) { aiming = value && CanAim; }
+
+        /// <summary>Chọc lỗ chủ động. flyDir là hướng bóng sẽ bay (ngược với hướng kim).</summary>
+        public bool TryVent(Vector2 flyDir)
+        {
+            if (!CanAim || flyDir.sqrMagnitude < 1e-6f) return false;
+            flyDir.Normalize();
+            jets.Add(new Jet
+            {
+                dir = flyDir,
+                duration = ventDuration,
+                thrust = ventThrust,
+                airCost = ventAirCost,
+                isLeak = false
+            });
+            StartGame();
+            VentStarted?.Invoke(Center - flyDir * Radius, flyDir);
+            return true;
+        }
+
+        /// <summary>Lần di chuyển đầu tiên: bật trọng lực rất nhỏ để bóng không còn đứng im nữa.</summary>
+        void StartGame()
+        {
+            if (started) return;
+            started = true;
+            rb.gravityScale = playGravityScale;
+            GameStarted?.Invoke();
+        }
+
+        /// <summary>Gai gọi hàm này khi chạm bóng. hitPoint là điểm chạm trên bề mặt bóng.</summary>
+        public bool AddLeak(Vector2 hitPoint)
+        {
+            if (empty || goal) return false;
+            if (LeakCount >= maxLeaks) return false;
+            if (Time.time - lastLeakTime < leakCooldown) return false;
+            lastLeakTime = Time.time;
+
+            Vector2 outward = hitPoint - Center;
+            if (outward.sqrMagnitude < 1e-6f) outward = Vector2.up;
+            outward.Normalize();
+
+            // Khí thoát ra phía lỗ => bóng bị đẩy ngược lại.
+            Vector2 flyDir = -outward;
+            jets.Add(new Jet
+            {
+                dir = flyDir,
+                duration = leakDuration,
+                thrust = leakThrust,
+                airCost = leakAirCost,
+                isLeak = true
+            });
+            LeakAdded?.Invoke(Center + outward * Radius, flyDir);
+            return true;
+        }
+
+        /// <summary>Vá ngay tất cả lỗ rò (keo). Không ảnh hưởng lực chọc chủ động.</summary>
+        public bool PatchAll()
+        {
+            int removed = jets.RemoveAll(j => j.isLeak);
+            if (removed > 0) PatchedUp?.Invoke();
+            return removed > 0;
+        }
+
+        public void AddAir(float amount)
+        {
+            if (empty || goal) return;
+            air = Mathf.Clamp01(air + amount);
+            ApplyScale();
+        }
+
+        public void ReachGoal()
+        {
+            if (goal || empty) return;
+            goal = true;
+            aiming = false;
+            jets.Clear();
+            rb.gravityScale = 0f; // về đích thì nằm yên trong vùng đích, không rơi tiếp
+            SetDamping(damping * 3f);
+            GoalReached?.Invoke();
+        }
+
+        // ---------- Simulation ----------
+
+        void FixedUpdate()
+        {
+            if (empty || goal) return;
+
+            float dt = Time.fixedDeltaTime;
+            float thrustScale = Mathf.Lerp(minThrustWhenLow, 1f, air);
+
+            for (int i = jets.Count - 1; i >= 0; i--)
+            {
+                Jet j = jets[i];
+                float k = Mathf.Clamp01(1f - j.t / j.duration); // lực giảm dần về 0
+                rb.AddForce(j.dir * (j.thrust * k * thrustScale), ForceMode2D.Force);
+                // Tích phân của k trên [0,1] là 0.5 => nhân 2 để tổng khí mất = airCost.
+                air -= j.airCost * 2f * k * dt / j.duration;
+                j.t += dt;
+                if (j.t >= j.duration) jets.RemoveAt(i);
+                else jets[i] = j;
+            }
+
+            air = Mathf.Max(0f, air);
+            ApplyScale();
+            if (air <= 0f) BecomeEmpty();
+        }
+
+        void BecomeEmpty()
+        {
+            if (empty) return;
+            empty = true;
+            aiming = false;
+            jets.Clear();
+            if (popWhenEmpty)
+            {
+                // Vỡ: không còn là vật thể nữa - tắt vật lý để mảnh vỡ tự bay, không còn va chạm/kích hoạt gai, nút...
+                rb.linearVelocity = Vector2.zero;
+                rb.simulated = false;
+            }
+            else
+            {
+                rb.gravityScale = emptyGravityScale;
+            }
+            BecameEmpty?.Invoke();
+        }
+
+        void ApplyScale()
+        {
+            float s = Mathf.Lerp(minScale, 1f, air) * baseScale;
+            transform.localScale = new Vector3(s, s, 1f);
+        }
+
+        void SetDamping(float value)
+        {
+#if UNITY_6000_0_OR_NEWER
+            rb.linearDamping = value;
+#else
+            rb.drag = value;
+#endif
+        }
+    }
+}

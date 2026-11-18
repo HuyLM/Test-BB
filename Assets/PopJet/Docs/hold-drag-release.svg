@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1360" height="630" viewBox="0 0 680 315" font-family="Arial, Helvetica, sans-serif">
+<title>Pop Jet - giữ, kéo, thả</title>
+<defs>
+<marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#1D9E75" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+<style>
+.th{font-size:14px;font-weight:bold;fill:#2C2C2A}
+.ts{font-size:12px;fill:#5F5E5A}
+.panel{fill:#FFFFFF;stroke:#B4B2A9;stroke-width:0.5}
+.balloon{fill:#FAECE7;stroke:#993C1D;stroke-width:0.5}
+.finger{fill:#EEEDFE;stroke:#534AB7;stroke-width:0.5}
+.needle{fill:#F1EFE8;stroke:#5F5E5A;stroke-width:0.5}
+.zone{fill:none;stroke:#2C2C2A;stroke-width:0.5;stroke-dasharray:3 3}
+</style>
+</defs>
+<rect width="680" height="315" fill="#FFFFFF"/>
+
+<rect class="panel" x="40" y="40" width="135" height="225" rx="8"/>
+<rect class="panel" x="195" y="40" width="135" height="225" rx="8"/>
+<rect class="panel" x="350" y="40" width="135" height="225" rx="8"/>
+<rect class="panel" x="505" y="40" width="135" height="225" rx="8"/>
+
+<text class="th" x="107.5" y="62" text-anchor="middle">Giữ</text>
+<text class="ts" x="107.5" y="80" text-anchor="middle">Chạm vào bóng</text>
+<text class="th" x="262.5" y="62" text-anchor="middle">Kéo</text>
+<text class="ts" x="262.5" y="80" text-anchor="middle">Kim hiện phía ngón</text>
+<text class="th" x="417.5" y="62" text-anchor="middle">Thả</text>
+<text class="ts" x="417.5" y="80" text-anchor="middle">Kim đâm, bóng bay</text>
+<text class="th" x="572.5" y="62" text-anchor="middle">Hủy</text>
+<text class="ts" x="572.5" y="80" text-anchor="middle">Thả gần tâm bóng</text>
+
+<circle class="balloon" cx="107.5" cy="170" r="32"/>
+<circle class="zone" cx="107.5" cy="170" r="13"/>
+<circle class="finger" cx="116" cy="178" r="9"/>
+
+<circle class="balloon" cx="262.5" cy="170" r="32"/>
+<circle class="zone" cx="262.5" cy="170" r="13"/>
+<polygon class="needle" points="285.5,142.3 302.7,127.9 296.5,122.7"/>
+<line x1="299.6" y1="125.3" x2="308.6" y2="114.6" stroke="#888780" stroke-width="2" stroke-linecap="round"/>
+<circle class="finger" cx="316.3" cy="105.3" r="9"/>
+<line x1="262.5" y1="170" x2="230.5" y2="208.5" stroke="#1D9E75" stroke-width="2.5" stroke-linecap="round" marker-end="url(#arrow)"/>
+<text class="ts" x="236" y="232" text-anchor="middle">Hướng bay</text>
+
+<circle class="balloon" cx="417.5" cy="170" r="32"/>
+<circle cx="437.9" cy="145.3" r="3.5" fill="#2C2C2A"/>
+<line x1="441.1" y1="141.5" x2="451.3" y2="129.1" stroke="#888780" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="442.5" y1="143.4" x2="457.3" y2="137.3" stroke="#888780" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="438.9" y1="140.4" x2="442.2" y2="124.7" stroke="#888780" stroke-width="1.5" stroke-linecap="round"/>
+<circle class="zone" cx="377.8" cy="217.7" r="24"/>
+<line x1="417.5" y1="170" x2="384.2" y2="210" stroke="#1D9E75" stroke-width="2.5" stroke-linecap="round" marker-end="url(#arrow)"/>
+
+<circle class="balloon" cx="572.5" cy="170" r="32"/>
+<circle class="zone" cx="572.5" cy="170" r="13"/>
+<circle class="finger" cx="574" cy="173" r="9"/>
+
+<text class="ts" x="340" y="292" text-anchor="middle">Tím: ngón tay · Xám: kim · Xanh lá: hướng bay · Nét đứt: vùng hủy</text>
+</svg>
