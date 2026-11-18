@@ -6,6 +6,27 @@ namespace PopJet
 {
     public enum BalloonState { Floating, Aiming, Venting, Empty, Goal, Ready }
 
+    /// <summary>Lý do bóng nổ hoặc xẹp, để HUD hiện chữ (GDD §3.5; chữ tiếng Anh nằm ở GameText).</summary>
+    public enum FailReason { None, OutOfAir, Burned, Zapped, Sliced, Squashed, SuckedIn, CatAttack }
+
+    /// <summary>Ảnh chụp chỉ đọc của một jet đang chạy, dùng cho quỹ đạo dự đoán và hiệu ứng lỗ rò.</summary>
+    public struct JetInfo
+    {
+        public int id;
+        /// <summary>Hướng lực đẩy = hướng bóng bay.</summary>
+        public Vector2 dir;
+        public float thrust;
+        public float duration;
+        public float elapsed;
+        public float airCost;
+        public bool isLeak;
+
+        /// <summary>Hệ số lực còn lại, từ 1 giảm tuyến tính về 0.</summary>
+        public float Strength01 => duration > 0f ? Mathf.Clamp01(1f - elapsed / duration) : 0f;
+        /// <summary>Hướng khí thoát ra (ngược hướng bay), cũng là vị trí lỗ trên mặt bóng.</summary>
+        public Vector2 Outward => -dir;
+    }
+
     /// <summary>
     /// Bóng bay: quản lý khí, lực đẩy khi chọc lỗ (vent) và lỗ rò (leak).
     /// Lực đẩy giảm tuyến tính theo thời gian; lỗ rò tự đóng, hoặc được vá bằng PatchAll().
@@ -56,9 +77,12 @@ namespace PopJet
         public event Action GoalReached;
         /// <summary>Bắn ra một lần ở lần chọc đầu tiên: từ đây bóng bắt đầu rơi chậm.</summary>
         public event Action GameStarted;
+        /// <summary>Sau mỗi cú chọc thành công, kèm tổng số cú chọc từ đầu màn (để tính Par).</summary>
+        public event Action<int> Poked;
 
         struct Jet
         {
+            public int id;
             public Vector2 dir;
             public float t;
             public float duration;
@@ -73,22 +97,70 @@ namespace PopJet
         float air;
         float baseScale;
         float lastLeakTime = -99f;
+        int nextJetId;
+        int pokeCount;
         bool aiming;
         bool empty;
+        bool burst;
         bool goal;
         bool started;
+        FailReason lastFailReason;
 
         public float Air01 => air;
         /// <summary>false = vừa load màn, bóng đứng im chờ người chơi chọc lần đầu.</summary>
         public bool Started => started;
         /// <summary>true = hết khí thì vỡ tung thay vì xẹp rơi.</summary>
         public bool PopWhenEmpty => popWhenEmpty;
+        /// <summary>true = bóng đã vỡ tung (hết khí khi Pop When Empty bật, hoặc bị vật cứng làm nổ qua Pop()).</summary>
+        public bool Burst => burst;
+        /// <summary>Lý do lần nổ/xẹp gần nhất (None khi bóng còn sống).</summary>
+        public FailReason LastFailReason => lastFailReason;
         public Vector2 Center => transform.position;
         public float Radius => circle.radius * transform.lossyScale.x;
         public bool CanAim => !empty && !goal && air > 0f;
         public bool HasLeaks => LeakCount > 0;
         public int LeakCount { get { int n = 0; foreach (var j in jets) if (j.isLeak) n++; return n; } }
         public int VentCount { get { int n = 0; foreach (var j in jets) if (!j.isLeak) n++; return n; } }
+
+        /// <summary>Số cú chọc từ đầu màn.</summary>
+        public int PokeCount => pokeCount;
+        /// <summary>Số cú chọc còn lại tính theo khí (có thể lẻ, ví dụ 2.6).</summary>
+        public float PokesLeft => ventAirCost > 0f ? air / ventAirCost : 0f;
+        /// <summary>true = khí chỉ còn đủ cho tối đa 1 cú chọc: cú chọc tiếp theo sẽ làm bóng hết khí.</summary>
+        public bool IsLastPoke => air <= ventAirCost;
+
+        // Thông số chỉ đọc cho quỹ đạo dự đoán.
+        public float VentAirCost => ventAirCost;
+        public float VentThrust => ventThrust;
+        public float VentDuration => ventDuration;
+        public float MinThrustWhenLow => minThrustWhenLow;
+        public float PlayGravityScale => playGravityScale;
+        public Rigidbody2D Body => rb;
+
+        public Vector2 Velocity
+        {
+            get
+            {
+#if UNITY_6000_0_OR_NEWER
+                return rb.linearVelocity;
+#else
+                return rb.velocity;
+#endif
+            }
+        }
+
+        /// <summary>Damping hiện tại của Rigidbody2D (tăng gấp 3 khi về đích).</summary>
+        public float Damping
+        {
+            get
+            {
+#if UNITY_6000_0_OR_NEWER
+                return rb.linearDamping;
+#else
+                return rb.drag;
+#endif
+            }
+        }
 
         public BalloonState State
         {
@@ -127,6 +199,7 @@ namespace PopJet
             flyDir.Normalize();
             jets.Add(new Jet
             {
+                id = nextJetId++,
                 dir = flyDir,
                 duration = ventDuration,
                 thrust = ventThrust,
@@ -134,7 +207,9 @@ namespace PopJet
                 isLeak = false
             });
             StartGame();
+            pokeCount++;
             VentStarted?.Invoke(Center - flyDir * Radius, flyDir);
+            Poked?.Invoke(pokeCount);
             return true;
         }
 
@@ -163,6 +238,7 @@ namespace PopJet
             Vector2 flyDir = -outward;
             jets.Add(new Jet
             {
+                id = nextJetId++,
                 dir = flyDir,
                 duration = leakDuration,
                 thrust = leakThrust,
@@ -199,6 +275,35 @@ namespace PopJet
             GoalReached?.Invoke();
         }
 
+        /// <summary>
+        /// Làm nổ bóng ngay (vật cản nhóm D: lửa, cưa, điện...). Luôn vỡ tung, kể cả khi Pop When Empty tắt.
+        /// </summary>
+        public void Pop(FailReason reason)
+        {
+            if (empty || goal) return;
+            air = 0f;
+            BecomeEmpty(reason, true);
+        }
+
+        /// <summary>Chép các jet đang chạy (cú chọc và lỗ rò) vào results. Không tạo rác bộ nhớ.</summary>
+        public void GetJets(List<JetInfo> results)
+        {
+            results.Clear();
+            foreach (var j in jets)
+            {
+                results.Add(new JetInfo
+                {
+                    id = j.id,
+                    dir = j.dir,
+                    thrust = j.thrust,
+                    duration = j.duration,
+                    elapsed = j.t,
+                    airCost = j.airCost,
+                    isLeak = j.isLeak
+                });
+            }
+        }
+
         // ---------- Simulation ----------
 
         void FixedUpdate()
@@ -222,19 +327,25 @@ namespace PopJet
 
             air = Mathf.Max(0f, air);
             ApplyScale();
-            if (air <= 0f) BecomeEmpty();
+            if (air <= 0f) BecomeEmpty(FailReason.OutOfAir, false);
         }
 
-        void BecomeEmpty()
+        void BecomeEmpty(FailReason reason, bool forceBurst)
         {
             if (empty) return;
             empty = true;
             aiming = false;
             jets.Clear();
-            if (popWhenEmpty)
+            lastFailReason = reason;
+            burst = popWhenEmpty || forceBurst;
+            if (burst)
             {
                 // Vỡ: không còn là vật thể nữa - tắt vật lý để mảnh vỡ tự bay, không còn va chạm/kích hoạt gai, nút...
+#if UNITY_6000_0_OR_NEWER
                 rb.linearVelocity = Vector2.zero;
+#else
+                rb.velocity = Vector2.zero;
+#endif
                 rb.simulated = false;
             }
             else

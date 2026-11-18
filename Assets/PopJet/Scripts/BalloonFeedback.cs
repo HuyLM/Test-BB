@@ -80,7 +80,7 @@ namespace PopJet
 
         void OnEmpty()
         {
-            if (!balloon.PopWhenEmpty) { PlayOne(emptyClip); return; }
+            if (!balloon.Burst) { PlayOne(emptyClip); return; }
 
             // Vỡ tung: mảnh vỡ cùng màu bóng bắn ra mọi hướng + tiếng nổ + rung camera, rồi ẩn bóng.
             Color color = Color.white;

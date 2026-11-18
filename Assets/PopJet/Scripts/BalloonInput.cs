@@ -1,5 +1,8 @@
+using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
@@ -11,9 +14,14 @@ namespace PopJet
     {
         public static bool Down, Held, Up;
         public static Vector2 ScreenPos;
+        static int polledFrame = -1;
+        static readonly List<RaycastResult> uiHits = new List<RaycastResult>();
 
+        /// <summary>Nhiều script cùng gọi trong một frame thì chỉ đọc một lần, kết quả như nhau.</summary>
         public static void Poll()
         {
+            if (polledFrame == Time.frameCount) return;
+            polledFrame = Time.frameCount;
 #if ENABLE_INPUT_SYSTEM
             var p = Pointer.current;
             if (p == null) { Down = Held = Up = false; return; }
@@ -39,11 +47,25 @@ namespace PopJet
             }
 #endif
         }
+
+        /// <summary>
+        /// true = điểm chạm nằm trên phần tử UI có Raycast Target (nút HUD...).
+        /// Raycast thủ công nên không phụ thuộc pointer id, chạy được cả chuột lẫn cảm ứng.
+        /// </summary>
+        public static bool IsOverUI(Vector2 screenPos)
+        {
+            var es = EventSystem.current;
+            if (es == null) return false;
+            var data = new PointerEventData(es) { position = screenPos };
+            uiHits.Clear();
+            es.RaycastAll(data, uiHits);
+            return uiHits.Count > 0;
+        }
     }
 
     /// <summary>
     /// Giữ - kéo - thả: ngón tay ở hướng nào thì cây kim hiện ở hướng đó và đâm lỗ ở đó;
-    /// bóng bay theo hướng ngược lại. Thả gần tâm bóng = hủy.
+    /// bóng bay theo hướng ngược lại. Thả gần tâm bóng = hủy. Chạm bắt đầu trên UI thì bỏ qua.
     /// Sprite kim: đầu nhọn phải hướng lên (trục +Y local).
     /// </summary>
     public class BalloonInput : MonoBehaviour
@@ -51,7 +73,8 @@ namespace PopJet
         [SerializeField] BalloonController balloon;
         [Tooltip("Sprite cây kim (đầu nhọn hướng +Y). Có thể để trống.")]
         [SerializeField] Transform needle;
-        [Tooltip("Mũi tên dự đoán hướng bay (LineRenderer 2 điểm, world space). Có thể để trống.")]
+        [Tooltip("Mũi tên thẳng chỉ hướng bay (LineRenderer 2 điểm, world space). Có thể để trống;\n" +
+                 "scene mẫu dùng TrajectoryPreview thay cho mũi tên này.")]
         [SerializeField] LineRenderer flightArrow;
         [Tooltip("Vùng chạm để bắt đầu giữ = Radius * hệ số này.")]
         [SerializeField] float grabPadding = 1.4f;
@@ -65,11 +88,25 @@ namespace PopJet
                  "Thời gian chơi trong LevelManager dùng unscaled time nên vẫn đếm.")]
         [SerializeField] bool freezeWorldWhileAiming = true;
 
+        /// <summary>Bắt đầu giữ trên bóng (thế giới vừa dừng).</summary>
+        public event Action AimStarted;
+        /// <summary>Kết thúc ngắm. true = đã chọc thật, false = hủy.</summary>
+        public event Action<bool> AimEnded;
+
         Camera cam;
         bool aiming;
         bool cancelNow;
         Vector2 needleDir = Vector2.up;
         Coroutine stabRoutine;
+
+        public BalloonController Balloon => balloon;
+        public bool IsAiming => aiming;
+        /// <summary>Đang ngắm và ngón tay ngoài vùng hủy: thả ra bây giờ sẽ chọc.</summary>
+        public bool HasAimDirection => aiming && !cancelNow;
+        /// <summary>Hướng bóng sẽ bay nếu thả ra bây giờ (ngược hướng kim).</summary>
+        public Vector2 FlyDirection => -needleDir;
+        /// <summary>Vị trí ngón tay/chuột trong world (cập nhật mỗi frame).</summary>
+        public Vector2 PointerWorld { get; private set; }
 
         void Awake()
         {
@@ -83,12 +120,14 @@ namespace PopJet
             if (balloon == null || cam == null) return;
 
             Vector2 world = ScreenToWorld(PointerHelper.ScreenPos);
+            PointerWorld = world;
             Vector2 center = balloon.Center;
 
             if (!aiming)
             {
                 if (PointerHelper.Down && balloon.CanAim &&
-                    Vector2.Distance(world, center) <= balloon.Radius * grabPadding)
+                    Vector2.Distance(world, center) <= balloon.Radius * grabPadding &&
+                    !PointerHelper.IsOverUI(PointerHelper.ScreenPos))
                     BeginAim();
                 else
                     return;
@@ -122,6 +161,7 @@ namespace PopJet
             if (stabRoutine != null) { StopCoroutine(stabRoutine); stabRoutine = null; }
             if (needle != null) needle.gameObject.SetActive(false);
             SetWorldFrozen(true);
+            AimStarted?.Invoke();
         }
 
         void EndAim(bool fire)
@@ -131,15 +171,14 @@ namespace PopJet
             balloon.SetAiming(false);
             if (flightArrow != null) flightArrow.enabled = false;
 
-            if (fire)
+            bool vented = fire && balloon.TryVent(-needleDir); // bay ngược hướng kim
+            AimEnded?.Invoke(vented);
+
+            if (vented && needle != null)
             {
-                balloon.TryVent(-needleDir); // bay ngược hướng kim
-                if (needle != null)
-                {
-                    if (stabRoutine != null) StopCoroutine(stabRoutine);
-                    stabRoutine = StartCoroutine(Stab(needleDir));
-                    return;
-                }
+                if (stabRoutine != null) StopCoroutine(stabRoutine);
+                stabRoutine = StartCoroutine(Stab(needleDir));
+                return;
             }
             if (needle != null) needle.gameObject.SetActive(false);
         }

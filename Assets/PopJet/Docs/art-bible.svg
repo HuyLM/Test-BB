@@ -1,0 +1,289 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1520" height="1800" viewBox="0 0 760 900" font-family="Nunito, 'Baloo 2', Arial, Helvetica, sans-serif">
+<title>Pop Jet - art bible</title>
+<defs>
+<marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#3E9FD3" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker>
+<clipPath id="band"><rect x="606" y="590" width="112" height="10" rx="2"/></clipPath>
+<style>
+.th{font-size:16px;font-weight:bold;fill:#2B2B3A}
+.h{font-size:13px;font-weight:bold;fill:#2B2B3A}
+.n{font-size:13px;font-weight:bold}
+.r{font-size:11px}
+.t{font-size:10.5px;fill:#2B2B3A}
+.l{font-size:12px;font-weight:bold;fill:#2B2B3A;text-anchor:middle}
+.s{font-size:9.5px;fill:#5F5E5A;text-anchor:middle}
+.sh{fill:#5B4636;opacity:.14}
+.bl{fill:#E63946;stroke:#2B2B3A;stroke-width:2.5}
+.hl{fill:#FFD6D6;opacity:.9}
+.kn{fill:#C92F3B;stroke:#2B2B3A;stroke-width:1}
+.ink{fill:none;stroke:#2B2B3A;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tile{fill:#FBF7F1;stroke:#D9C7AE;stroke-width:1.2}
+.tb{fill:#7E8794;stroke:#2B2B3A;stroke-width:.9}
+.tp{fill:#9AA3AF;stroke:#2B2B3A;stroke-width:.9}
+.sw{stroke:#2B2B3A;stroke-width:.8}
+</style>
+</defs>
+<rect width="760" height="900" fill="#FFFFFF"/>
+<text class="th" x="30" y="30">Art bible · hướng A, tạo bằng AI: thế giới giấy cắt, bóng vinyl bóng loáng</text>
+
+<!-- 1. Nền theo thế giới -->
+<text class="h" x="30" y="56">1. Nền vùng chơi theo thế giới (≥ 3:1 với bóng #E63946, WCAG 1.4.11)</text>
+
+<rect class="sh" x="33" y="74" width="220" height="114" rx="12"/>
+<rect x="30" y="70" width="220" height="114" rx="12" fill="#F7EFE3" stroke="#2B2B3A" stroke-width=".6"/>
+<circle class="bl" cx="72" cy="122" r="22"/>
+<ellipse class="hl" cx="64" cy="114" rx="6" ry="3.5" transform="rotate(-35 64 114)"/>
+<path class="kn" d="M68 144L76 144L72 150Z"/>
+<circle cx="66" cy="123" r="2.6" fill="#2B2B3A"/><circle cx="78" cy="123" r="2.6" fill="#2B2B3A"/>
+<path class="ink" d="M67 131Q72 135 77 131" stroke-width="1.8"/>
+<text class="n" x="108" y="100" fill="#2B2B3A">1 · Ngôi nhà</text>
+<text class="r" x="108" y="118" fill="#2B2B3A">#F7EFE3 · 3.65:1</text>
+<rect class="sw" x="108" y="130" width="28" height="28" rx="6" fill="#CFE8DF"/>
+<rect class="sw" x="142" y="130" width="28" height="28" rx="6" fill="#C49A6C"/>
+<rect class="sw" x="176" y="130" width="28" height="28" rx="6" fill="#F2C4B0"/>
+<text x="108" y="174" font-size="9.5" fill="#5F5E5A">màu phụ và nhấn</text>
+
+<rect class="sh" x="273" y="74" width="220" height="114" rx="12"/>
+<rect x="270" y="70" width="220" height="114" rx="12" fill="#CFEFFF" stroke="#2B2B3A" stroke-width=".6"/>
+<circle class="bl" cx="312" cy="122" r="22"/>
+<ellipse class="hl" cx="304" cy="114" rx="6" ry="3.5" transform="rotate(-35 304 114)"/>
+<path class="kn" d="M308 144L316 144L312 150Z"/>
+<circle cx="306" cy="123" r="2.6" fill="#2B2B3A"/><circle cx="318" cy="123" r="2.6" fill="#2B2B3A"/>
+<path class="ink" d="M307 131Q312 135 317 131" stroke-width="1.8"/>
+<text class="n" x="348" y="100" fill="#2B2B3A">2 · Khu vườn</text>
+<text class="r" x="348" y="118" fill="#2B2B3A">#CFEFFF · 3.46:1</text>
+<rect class="sw" x="348" y="130" width="28" height="28" rx="6" fill="#8CCB7A"/>
+<rect class="sw" x="382" y="130" width="28" height="28" rx="6" fill="#4F9A5B"/>
+<rect class="sw" x="416" y="130" width="28" height="28" rx="6" fill="#F7A8C4"/>
+<text x="348" y="174" font-size="9.5" fill="#5F5E5A">màu phụ và nhấn</text>
+
+<rect class="sh" x="513" y="74" width="220" height="114" rx="12"/>
+<rect x="510" y="70" width="220" height="114" rx="12" fill="#2A2850" stroke="#2B2B3A" stroke-width=".6"/>
+<circle cx="552" cy="122" r="25" fill="none" stroke="#FFFFFF" stroke-width="2" opacity=".9"/>
+<circle class="bl" cx="552" cy="122" r="22"/>
+<ellipse class="hl" cx="544" cy="114" rx="6" ry="3.5" transform="rotate(-35 544 114)"/>
+<path class="kn" d="M548 144L556 144L552 150Z"/>
+<circle cx="546" cy="123" r="2.6" fill="#2B2B3A"/><circle cx="558" cy="123" r="2.6" fill="#2B2B3A"/>
+<path class="ink" d="M547 131Q552 135 557 131" stroke-width="1.8"/>
+<text class="n" x="588" y="100" fill="#FFFFFF">3 · Thành phố</text>
+<text class="r" x="588" y="118" fill="#FFFFFF">#2A2850 · 3.32:1</text>
+<rect class="sw" x="588" y="130" width="28" height="28" rx="6" fill="#4B3F8C"/>
+<rect class="sw" x="622" y="130" width="28" height="28" rx="6" fill="#F7A072"/>
+<rect class="sw" x="656" y="130" width="28" height="28" rx="6" fill="#4DF0FF"/>
+<text x="588" y="174" font-size="9.5" fill="#FFFFFF" opacity=".85">nền tối: thêm quầng sáng trắng</text>
+
+<rect class="sh" x="33" y="200" width="220" height="114" rx="12"/>
+<rect x="30" y="196" width="220" height="114" rx="12" fill="#D5E5E2" stroke="#2B2B3A" stroke-width=".6"/>
+<circle class="bl" cx="72" cy="248" r="22"/>
+<ellipse class="hl" cx="64" cy="240" rx="6" ry="3.5" transform="rotate(-35 64 240)"/>
+<path class="kn" d="M68 270L76 270L72 276Z"/>
+<circle cx="66" cy="249" r="2.6" fill="#2B2B3A"/><circle cx="78" cy="249" r="2.6" fill="#2B2B3A"/>
+<path class="ink" d="M67 257Q72 261 77 257" stroke-width="1.8"/>
+<text class="n" x="108" y="226" fill="#2B2B3A">4 · Xưởng đồ chơi</text>
+<text class="r" x="108" y="244" fill="#2B2B3A">#D5E5E2 · 3.20:1</text>
+<rect class="sw" x="108" y="256" width="28" height="28" rx="6" fill="#2F6F73"/>
+<rect class="sw" x="142" y="256" width="28" height="28" rx="6" fill="#E8B04B"/>
+<rect class="sw" x="176" y="256" width="28" height="28" rx="6" fill="#4A7BD0"/>
+<text x="108" y="300" font-size="9.5" fill="#5F5E5A">xanh két đậm chỉ làm khung</text>
+
+<rect class="sh" x="273" y="200" width="220" height="114" rx="12"/>
+<rect x="270" y="196" width="220" height="114" rx="12" fill="#DCE6F0" stroke="#2B2B3A" stroke-width=".6"/>
+<circle class="bl" cx="312" cy="248" r="22"/>
+<ellipse class="hl" cx="304" cy="240" rx="6" ry="3.5" transform="rotate(-35 304 240)"/>
+<path class="kn" d="M308 270L316 270L312 276Z"/>
+<circle cx="306" cy="249" r="2.6" fill="#2B2B3A"/><circle cx="318" cy="249" r="2.6" fill="#2B2B3A"/>
+<path class="ink" d="M307 257Q312 261 317 257" stroke-width="1.8"/>
+<text class="n" x="348" y="226" fill="#2B2B3A">5 · Tầng mây</text>
+<text class="r" x="348" y="244" fill="#2B2B3A">#DCE6F0 · 3.30:1</text>
+<rect class="sw" x="348" y="256" width="28" height="28" rx="6" fill="#4A5568"/>
+<rect class="sw" x="382" y="256" width="28" height="28" rx="6" fill="#FFE66D"/>
+<rect class="sw" x="416" y="256" width="28" height="28" rx="6" fill="#7D8CA3"/>
+<text x="348" y="300" font-size="9.5" fill="#5F5E5A">mây đậm chỉ ở mép màn</text>
+
+<rect class="sh" x="513" y="200" width="220" height="114" rx="12"/>
+<rect x="510" y="196" width="220" height="114" rx="12" fill="#141B3A" stroke="#2B2B3A" stroke-width=".6"/>
+<circle cx="552" cy="248" r="25" fill="none" stroke="#FFFFFF" stroke-width="2" opacity=".9"/>
+<circle class="bl" cx="552" cy="248" r="22"/>
+<ellipse class="hl" cx="544" cy="240" rx="6" ry="3.5" transform="rotate(-35 544 240)"/>
+<path class="kn" d="M548 270L556 270L552 276Z"/>
+<circle cx="546" cy="249" r="2.6" fill="#2B2B3A"/><circle cx="558" cy="249" r="2.6" fill="#2B2B3A"/>
+<path class="ink" d="M547 257Q552 261 557 257" stroke-width="1.8"/>
+<text class="n" x="588" y="226" fill="#FFFFFF">6 · Vũ trụ</text>
+<text class="r" x="588" y="244" fill="#FFFFFF">#141B3A · 4.04:1</text>
+<rect class="sw" x="588" y="256" width="28" height="28" rx="6" fill="#5B3E8F"/>
+<rect class="sw" x="622" y="256" width="28" height="28" rx="6" fill="#E58FC1"/>
+<rect class="sw" x="656" y="256" width="28" height="28" rx="6" fill="#FFF6D6"/>
+<text x="588" y="300" font-size="9.5" fill="#FFFFFF" opacity=".85">nền tối: thêm quầng sáng trắng</text>
+
+<!-- 2. Màu chức năng + ví dụ nên tránh -->
+<text class="h" x="30" y="338">2. Màu chức năng (giữ nguyên ở mọi thế giới)</text>
+<rect class="sw" x="30" y="350" width="48" height="36" rx="8" fill="#E63946"/>
+<text class="l" x="54" y="401">Bóng</text><text class="s" x="54" y="414">#E63946</text>
+<rect class="sw" x="100" y="350" width="48" height="36" rx="8" fill="#FFD6D6"/>
+<text class="l" x="124" y="401">Highlight</text><text class="s" x="124" y="414">#FFD6D6</text>
+<rect class="sw" x="170" y="350" width="48" height="36" rx="8" fill="#2B2B3A"/>
+<text class="l" x="194" y="401">Viền</text><text class="s" x="194" y="414">#2B2B3A</text>
+<rect class="sw" x="240" y="350" width="48" height="36" rx="8" fill="#1D9E75"/>
+<text class="l" x="264" y="401">Ngắm</text><text class="s" x="264" y="414">#1D9E75</text>
+<rect class="sw" x="310" y="350" width="48" height="36" rx="8" fill="#C9CED6"/>
+<text class="l" x="334" y="401">Kim</text><text class="s" x="334" y="414">#C9CED6</text>
+<rect class="sw" x="380" y="350" width="48" height="36" rx="8" fill="#FFD23F"/>
+<text class="l" x="404" y="401">Sao, xu</text><text class="s" x="404" y="414">#FFD23F</text>
+<rect class="sw" x="450" y="350" width="48" height="36" rx="8" fill="#FF8A00"/>
+<text class="l" x="474" y="401">Nhóm D</text><text class="s" x="474" y="414">#FF8A00</text>
+
+<rect x="530" y="346" width="200" height="66" rx="10" fill="#7D8CA3"/>
+<path d="M630 346H720A10 10 0 0 1 730 356V402A10 10 0 0 1 720 412H630Z" fill="#8B8B8B"/>
+<circle cx="580" cy="381" r="20" fill="#E63946"/>
+<circle cx="680" cy="381" r="20" fill="#7C7C7C"/>
+<text x="537" y="359" font-size="9" fill="#FFFFFF">màu</text>
+<text x="637" y="359" font-size="9" fill="#FFFFFF">ảnh xám</text>
+<text class="t" x="530" y="428">Tránh nền tông trung: #7D8CA3 chỉ 1.22:1.</text>
+<text class="t" x="530" y="442">Ảnh xám (phải): bóng gần như biến mất</text>
+
+<!-- 3. Bốn nhóm vật cản -->
+<text class="h" x="30" y="476">3. Bốn nhóm vật cản: nhận ra bằng hình dạng và chuyển động, rồi mới tới màu</text>
+
+<rect class="tile" x="30" y="488" width="172" height="150" rx="12"/>
+<circle cx="50" cy="510" r="13" fill="#7E8794" stroke="#2B2B3A" stroke-width="1.2"/>
+<text x="50" y="514.5" font-size="13" font-weight="bold" fill="#FFFFFF" text-anchor="middle">A</text>
+<text x="70" y="515" font-size="12.5" font-weight="bold" fill="#2B2B3A">Gây rò (mềm)</text>
+<rect x="76" y="578" width="80" height="8" fill="#C49A6C" stroke="#2B2B3A" stroke-width="1"/>
+<ellipse class="tb" cx="86" cy="577" rx="10" ry="3.5"/><path class="tp" d="M81.5 576L90.5 576L86 548Z"/><line x1="84.3" y1="572" x2="85" y2="556" stroke="#FFFFFF" stroke-width="1.2"/>
+<ellipse class="tb" cx="116" cy="577" rx="10" ry="3.5"/><path class="tp" d="M111.5 576L120.5 576L116 548Z"/><line x1="114.3" y1="572" x2="115" y2="556" stroke="#FFFFFF" stroke-width="1.2"/>
+<ellipse class="tb" cx="146" cy="577" rx="10" ry="3.5"/><path class="tp" d="M141.5 576L150.5 576L146 548Z"/><line x1="144.3" y1="572" x2="145" y2="556" stroke="#FFFFFF" stroke-width="1.2"/>
+<path d="M124 538L125.5 542.5L130 544L125.5 545.5L124 550L122.5 545.5L118 544L122.5 542.5Z" fill="#FFFFFF" stroke="#9AA3AF" stroke-width=".8"/>
+<text class="t" x="44" y="612">Mũi nhọn, bạc, lóe sáng</text>
+<text class="t" x="44" y="626">Thêm lỗ rò, chưa thua</text>
+
+<rect class="tile" x="212" y="488" width="172" height="150" rx="12"/>
+<circle cx="232" cy="510" r="13" fill="#3E9FD3" stroke="#2B2B3A" stroke-width="1.2"/>
+<text x="232" y="514.5" font-size="13" font-weight="bold" fill="#FFFFFF" text-anchor="middle">B</text>
+<text x="252" y="515" font-size="12.5" font-weight="bold" fill="#2B2B3A">Lực (trường lực)</text>
+<rect x="238" y="542" width="120" height="46" rx="10" fill="#BFE9FF" opacity=".55"/>
+<line x1="250" y1="553" x2="346" y2="553" stroke="#3E9FD3" stroke-width="2.2" stroke-dasharray="16 7" stroke-linecap="round" marker-end="url(#ar)"/>
+<line x1="256" y1="565" x2="342" y2="565" stroke="#3E9FD3" stroke-width="2.2" stroke-dasharray="11 8" stroke-linecap="round" marker-end="url(#ar)"/>
+<line x1="248" y1="577" x2="346" y2="577" stroke="#3E9FD3" stroke-width="2.2" stroke-dasharray="19 6" stroke-linecap="round" marker-end="url(#ar)"/>
+<ellipse cx="300" cy="547" rx="4.5" ry="2" fill="#8CCB7A" transform="rotate(30 300 547)"/>
+<ellipse cx="272" cy="583" rx="4.5" ry="2" fill="#8CCB7A" transform="rotate(-20 272 583)"/>
+<text class="t" x="226" y="612">Vệt cong trong mờ, lá bay</text>
+<text class="t" x="226" y="626">Đổi quỹ đạo, không gây hại</text>
+
+<rect class="tile" x="394" y="488" width="172" height="150" rx="12"/>
+<circle cx="414" cy="510" r="13" fill="#4AA3D8" stroke="#2B2B3A" stroke-width="1.2"/>
+<text x="414" y="514.5" font-size="13" font-weight="bold" fill="#FFFFFF" text-anchor="middle">C</text>
+<text x="434" y="515" font-size="12.5" font-weight="bold" fill="#2B2B3A">Đổi trạng thái</text>
+<circle cx="480" cy="563" r="28" fill="#7FD3FF" opacity=".3" stroke="#4AA3D8" stroke-width="1.6" stroke-dasharray="4 3"/>
+<circle cx="480" cy="563" r="14" fill="#E63946" stroke="#2B2B3A" stroke-width="2"/>
+<circle cx="476" cy="562" r="1.8" fill="#2B2B3A"/><circle cx="484" cy="562" r="1.8" fill="#2B2B3A"/>
+<circle cx="480" cy="568.5" r="1.6" fill="#2B2B3A"/>
+<path d="M444 540h8M448 536v8M445.2 537.2l5.6 5.6M450.8 537.2l-5.6 5.6" stroke="#4AA3D8" stroke-width="1.4" stroke-linecap="round"/>
+<path d="M509 545h8M513 541v8M510.2 542.2l5.6 5.6M515.8 542.2l-5.6 5.6" stroke="#4AA3D8" stroke-width="1.4" stroke-linecap="round"/>
+<path d="M504 590h8M508 586v8M505.2 587.2l5.6 5.6M510.8 587.2l-5.6 5.6" stroke="#4AA3D8" stroke-width="1.4" stroke-linecap="round"/>
+<text class="t" x="408" y="612">Hào quang và hạt riêng</text>
+<text class="t" x="408" y="626">Co, nở, dính, ướt</text>
+
+<rect class="tile" x="576" y="488" width="172" height="150" rx="12"/>
+<circle cx="596" cy="510" r="13" fill="#FF8A00" stroke="#2B2B3A" stroke-width="1.2"/>
+<text x="596" y="514.5" font-size="13" font-weight="bold" fill="#2B2B3A" text-anchor="middle">D</text>
+<text x="616" y="515" font-size="12.5" font-weight="bold" fill="#2B2B3A">Nổ ngay (cứng)</text>
+<circle cx="694" cy="562" r="20" fill="#FFC83D" opacity=".28"/>
+<polygon points="656,560 650.56,563.36 653.59,569 647.19,569.19 647,575.59 641.36,572.56 638,578 634.64,572.56 629,575.59 628.81,569.19 622.41,569 625.44,563.36 620,560 625.44,556.64 622.41,551 628.81,550.81 629,544.41 634.64,547.44 638,542 641.36,547.44 647,544.41 647.19,550.81 653.59,551 650.56,556.64" fill="#C9CED6" stroke="#2B2B3A" stroke-width="1.2" stroke-linejoin="round"/>
+<circle cx="638" cy="560" r="4" fill="#7E8794" stroke="#2B2B3A" stroke-width="1"/>
+<path d="M694 540C704 552 703 568 694 572C685 568 684 552 694 540Z" fill="#FF8A00" stroke="#2B2B3A" stroke-width="1"/>
+<path d="M694 553C699 559 698 568 694 570C690 568 689 559 694 553Z" fill="#FFC83D"/>
+<rect x="606" y="590" width="112" height="10" rx="2" fill="#FFC83D"/>
+<g clip-path="url(#band)" fill="#2B2B3A">
+  <path d="M600 600L608 590L616 590L608 600Z"/><path d="M616 600L624 590L632 590L624 600Z"/>
+  <path d="M632 600L640 590L648 590L640 600Z"/><path d="M648 600L656 590L664 590L656 600Z"/>
+  <path d="M664 600L672 590L680 590L672 600Z"/><path d="M680 600L688 590L696 590L688 600Z"/>
+  <path d="M696 600L704 590L712 590L704 600Z"/><path d="M712 600L720 590L728 590L720 600Z"/>
+</g>
+<rect x="606" y="590" width="112" height="10" rx="2" fill="none" stroke="#2B2B3A" stroke-width="1"/>
+<text class="t" x="590" y="612">Răng cưa, cam và sọc</text>
+<text class="t" x="590" y="626">Luôn động, báo trước ≥ 0.6 giây</text>
+
+<!-- 4. Biểu cảm -->
+<text class="h" x="30" y="662">4. Biểu cảm của Pốp (mắt to, miệng nhỏ, đọc được cả khi bóng nhỏ)</text>
+
+<circle class="bl" cx="70" cy="715" r="28"/>
+<ellipse class="hl" cx="61" cy="705" rx="7" ry="4" transform="rotate(-35 61 705)"/>
+<path class="kn" d="M66 743L74 743L70 749Z"/>
+<ellipse cx="62" cy="713" rx="3.4" ry="4.8" fill="#2B2B3A"/><ellipse cx="78" cy="713" rx="3.4" ry="4.8" fill="#2B2B3A"/>
+<circle cx="61" cy="711" r="1.1" fill="#FFFFFF"/><circle cx="77" cy="711" r="1.1" fill="#FFFFFF"/>
+<path class="ink" d="M63 723Q70 728 77 723"/>
+<text class="l" x="70" y="768">Chờ</text><text class="s" x="70" y="782">mời chạm vào</text>
+
+<circle class="bl" cx="190" cy="715" r="28"/>
+<ellipse class="hl" cx="181" cy="705" rx="7" ry="4" transform="rotate(-35 181 705)"/>
+<path class="kn" d="M186 743L194 743L190 749Z"/>
+<ellipse cx="181" cy="716" rx="3.4" ry="4.8" fill="#2B2B3A"/><circle cx="180" cy="714" r="1.1" fill="#FFFFFF"/>
+<path class="ink" d="M193 714Q198 710 203 714" stroke-width="2.2"/>
+<path class="ink" d="M184 726L195 725"/>
+<text class="l" x="190" y="768">Ngắm</text><text class="s" x="190" y="782">nheo một mắt</text>
+
+<circle class="bl" cx="310" cy="715" r="28"/>
+<ellipse class="hl" cx="301" cy="705" rx="7" ry="4" transform="rotate(-35 301 705)"/>
+<path class="kn" d="M306 743L314 743L310 749Z"/>
+<path class="ink" d="M299 709L305 713L299 717" stroke-width="2.2"/>
+<path class="ink" d="M321 709L315 713L321 717" stroke-width="2.2"/>
+<ellipse cx="310" cy="725" rx="3.5" ry="4.5" fill="#2B2B3A"/>
+<circle cx="343" cy="735" r="5" fill="#FFFFFF" stroke="#B9AE9F" stroke-width="1.2"/>
+<circle cx="351" cy="744" r="3.5" fill="#FFFFFF" stroke="#B9AE9F" stroke-width="1.2"/>
+<text class="l" x="310" y="768">Ui!</text><text class="s" x="310" y="782">vừa chọc</text>
+
+<circle class="bl" cx="430" cy="715" r="28"/>
+<ellipse class="hl" cx="421" cy="705" rx="7" ry="4" transform="rotate(-35 421 705)"/>
+<path class="kn" d="M426 743L434 743L430 749Z"/>
+<circle cx="421" cy="712" r="5.2" fill="#FFFFFF" stroke="#2B2B3A" stroke-width="1.5"/><circle cx="421" cy="713" r="2.2" fill="#2B2B3A"/>
+<circle cx="439" cy="712" r="5.2" fill="#FFFFFF" stroke="#2B2B3A" stroke-width="1.5"/><circle cx="439" cy="713" r="2.2" fill="#2B2B3A"/>
+<path class="ink" d="M422 726q2-3 4 0q2 3 4 0q2-3 4 0q2 3 4 0" stroke-width="1.8"/>
+<path d="M455 693C459 699 459 703 455 704C451 703 451 699 455 693Z" fill="#4AA3FF" stroke="#2B2B3A" stroke-width="1"/>
+<path d="M453 731l9 5M455 726l10 1" stroke="#B9AE9F" stroke-width="1.6" stroke-linecap="round"/>
+<text class="l" x="430" y="768">Hoảng</text><text class="s" x="430" y="782">đang bị rò</text>
+
+<circle class="bl" cx="550" cy="718" r="21"/>
+<ellipse class="hl" cx="543" cy="710" rx="5" ry="3" transform="rotate(-35 543 710)"/>
+<path class="kn" d="M546 739L554 739L550 745Z"/>
+<path d="M541 716A3.2 3.2 0 0 0 547.4 716Z" fill="#2B2B3A"/><path class="ink" d="M540.5 716H548" stroke-width="1.6"/>
+<path d="M552.6 716A3.2 3.2 0 0 0 559 716Z" fill="#2B2B3A"/><path class="ink" d="M552 716H559.5" stroke-width="1.6"/>
+<path class="ink" d="M545 727Q550 724 555 727" stroke-width="1.8"/>
+<path d="M567 699C570 703 570 706 567 707C564 706 564 703 567 699Z" fill="#4AA3FF" stroke="#2B2B3A" stroke-width=".8"/>
+<text class="l" x="550" y="768">Mệt</text><text class="s" x="550" y="782">sắp hết khí (bóng nhỏ lại)</text>
+
+<circle class="bl" cx="670" cy="715" r="28"/>
+<ellipse class="hl" cx="661" cy="705" rx="7" ry="4" transform="rotate(-35 661 705)"/>
+<path class="kn" d="M666 743L674 743L670 749Z"/>
+<path class="ink" d="M659 714Q663 708 667 714" stroke-width="2.2"/>
+<path class="ink" d="M673 714Q677 708 681 714" stroke-width="2.2"/>
+<path d="M661 721Q670 733 679 721Q670 725 661 721Z" fill="#2B2B3A"/>
+<rect x="638" y="690" width="6" height="3" fill="#FFD23F" transform="rotate(25 641 691.5)"/>
+<rect x="700" y="695" width="6" height="3" fill="#1D9E75" transform="rotate(-30 703 696.5)"/>
+<rect x="698" y="733" width="6" height="3" fill="#4A7BD0" transform="rotate(15 701 734.5)"/>
+<rect x="638" y="735" width="6" height="3" fill="#F7A8C4" transform="rotate(-20 641 736.5)"/>
+<text class="l" x="670" y="768">Vui</text><text class="s" x="670" y="782">về đích</text>
+
+<!-- 5. Nút UI -->
+<text class="h" x="30" y="806">5. Nút UI bơm hơi (nhấn: xẹp ×0.92 · thả: bật lại, vọt quá một chút)</text>
+<rect x="30" y="826" width="120" height="36" rx="18" fill="#14735A"/>
+<rect x="30" y="820" width="120" height="36" rx="18" fill="#1D9E75" stroke="#2B2B3A" stroke-width="2"/>
+<rect x="44" y="824" width="92" height="8" rx="4" fill="#FFFFFF" opacity=".35"/>
+<text x="90" y="844" font-size="15" font-weight="bold" fill="#FFFFFF" text-anchor="middle">Next</text>
+<text class="s" x="90" y="878">Nút chính</text>
+
+<rect x="183" y="828" width="104" height="31" rx="15.5" fill="#14735A"/>
+<rect x="183" y="826" width="104" height="31" rx="15.5" fill="#1D9E75" stroke="#2B2B3A" stroke-width="2"/>
+<rect x="195" y="829" width="80" height="6" rx="3" fill="#FFFFFF" opacity=".3"/>
+<text x="235" y="847" font-size="14" font-weight="bold" fill="#FFFFFF" text-anchor="middle">Next</text>
+<text class="s" x="235" y="878">Đang nhấn</text>
+
+<rect x="320" y="826" width="120" height="36" rx="18" fill="#2B2B3A" opacity=".22"/>
+<rect x="320" y="820" width="120" height="36" rx="18" fill="#FFFFFF" stroke="#2B2B3A" stroke-width="2"/>
+<text x="380" y="844" font-size="14" font-weight="bold" fill="#2B2B3A" text-anchor="middle">Retry</text>
+<text class="s" x="380" y="878">Nút phụ</text>
+
+<path class="sh" transform="translate(3 4)" d="M470 820L480 816L492 821L504 815L516 820L528 816L540 821L552 815L564 820L576 816L588 821L600 815L612 820L624 816L636 821L648 815L660 820L672 816L684 821L696 815L708 820L720 816L730 820L730 872L470 872Z"/>
+<path d="M470 820L480 816L492 821L504 815L516 820L528 816L540 821L552 815L564 820L576 816L588 821L600 815L612 820L624 816L636 821L648 815L660 820L672 816L684 821L696 815L708 820L720 816L730 820L730 872L470 872Z" fill="#FFFFFF" stroke="#D9C7AE" stroke-width="1.2"/>
+<rect x="585" y="808" width="30" height="12" fill="#F4D58D" opacity=".9" stroke="#D9B65E" stroke-width=".8" transform="rotate(-8 600 814)"/>
+<text class="t" x="486" y="846">Thiệp giấy mép xé,</text>
+<text class="t" x="486" y="861">ghim bằng băng keo của game</text>
+</svg>

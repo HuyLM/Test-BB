@@ -13,6 +13,8 @@ namespace PopJet
 
         GUIStyle style;
 
+        // Chỉ có trong Editor và Development Build: bản build thật không vẽ overlay này.
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         void OnGUI()
         {
             if (balloon == null) return;
@@ -24,9 +26,11 @@ namespace PopJet
             }
             string time = level != null ? $"\nTime: {level.PlayTime:0.0}s" : "";
             string frozen = Time.timeScale == 0f ? "  (PAUSED)" : "";
-            GUI.Label(new Rect(20, 20, 900, 260),
-                $"State: {balloon.State}{frozen}\nAir: {balloon.Air01:0.00}\nVents: {balloon.VentCount}  Leaks: {balloon.LeakCount}{time}",
+            // Góc dưới trái để không đè lên HUD (số cú chọc ở góc trên trái).
+            GUI.Label(new Rect(20, Screen.height - 300, 900, 280),
+                $"State: {balloon.State}{frozen}\nAir: {balloon.Air01:0.00}  Pokes left: {balloon.PokesLeft:0.0}\nVents: {balloon.VentCount}  Leaks: {balloon.LeakCount}{time}",
                 style);
         }
+#endif
     }
 }

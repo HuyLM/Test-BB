@@ -1,0 +1,286 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1520" height="1800" viewBox="0 0 760 900" font-family="Nunito, 'Baloo 2', Arial, Helvetica, sans-serif">
+<title>Pop Jet - mockup màn chơi lúc đang ngắm</title>
+<defs>
+<clipPath id="scr"><rect x="52" y="56" width="356" height="796" rx="34"/></clipPath>
+<marker id="wind" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#5BB8E6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker>
+<style>
+.th{font-size:15px;font-weight:bold;fill:#2B2B3A}
+.t{font-size:12px;fill:#2B2B3A}
+.ts{font-size:10.5px;fill:#5F5E5A}
+.pill{fill:#FFFFFF;stroke:#2B2B3A;stroke-width:1.8}
+.lip{fill:#2B2B3A;opacity:.22}
+.mk{fill:#2B2B3A;stroke:#FFFFFF;stroke-width:1.5}
+.mt{font-size:10px;font-weight:bold;fill:#FFFFFF;text-anchor:middle}
+.tb{fill:#7E8794;stroke:#2B2B3A;stroke-width:.8}
+.tp{fill:#9AA3AF;stroke:#2B2B3A;stroke-width:.8}
+.dot{fill:#1D9E75;stroke:#FFFFFF;stroke-width:1.2}
+.seg{fill:none;stroke-width:6;stroke-linecap:round}
+</style>
+</defs>
+<rect width="760" height="900" fill="#FFFFFF"/>
+<text class="th" x="40" y="30">Mockup: màn 1-7 lúc đang ngắm (Thế giới 1, Ngôi nhà)</text>
+
+<!-- Thân máy -->
+<rect x="40" y="44" width="380" height="820" rx="44" fill="#1E1E24"/>
+<g clip-path="url(#scr)">
+  <!-- Lề ngoài tường (giấy kraft) -->
+  <rect x="52" y="56" width="356" height="796" fill="#D9C7AE"/>
+  <!-- Giấy dán tường bạc hà -->
+  <rect x="88" y="56" width="284" height="604" fill="#CFE8DF"/>
+  <g fill="#C2DFD3">
+    <rect x="98" y="56" width="8" height="600"/><rect x="122" y="56" width="8" height="600"/><rect x="146" y="56" width="8" height="600"/>
+    <rect x="170" y="56" width="8" height="600"/><rect x="194" y="56" width="8" height="600"/><rect x="218" y="56" width="8" height="600"/>
+    <rect x="242" y="56" width="8" height="600"/><rect x="266" y="56" width="8" height="600"/><rect x="290" y="56" width="8" height="600"/>
+    <rect x="314" y="56" width="8" height="600"/><rect x="338" y="56" width="8" height="600"/><rect x="362" y="56" width="8" height="600"/>
+  </g>
+  <!-- Ốp tường kem + nẹp gỗ -->
+  <rect x="88" y="660" width="284" height="148" fill="#F7EFE3"/>
+  <rect x="88" y="656" width="284" height="5" fill="#C49A6C"/>
+  <!-- Sàn gỗ -->
+  <rect x="52" y="808" width="356" height="44" fill="#C49A6C"/>
+  <line x1="52" y1="822" x2="408" y2="822" stroke="#B0875A" stroke-width="1.5"/>
+  <line x1="52" y1="837" x2="408" y2="837" stroke="#B0875A" stroke-width="1.5"/>
+  <!-- Tường giấy + bóng đổ -->
+  <rect x="88" y="56" width="5" height="752" fill="#5B4636" opacity=".15"/>
+  <rect x="367" y="56" width="5" height="752" fill="#5B4636" opacity=".15"/>
+  <rect x="76" y="56" width="12" height="752" fill="#E8D9C4" stroke="#2B2B3A" stroke-width="1.5"/>
+  <rect x="372" y="56" width="12" height="752" fill="#E8D9C4" stroke="#2B2B3A" stroke-width="1.5"/>
+
+  <!-- Đích: ô cửa sổ -->
+  <rect x="294" y="166" width="78" height="108" rx="10" fill="#FFF3C4" opacity=".75"/>
+  <rect x="303" y="176" width="66" height="96" rx="6" fill="#5B4636" opacity=".15"/>
+  <rect x="300" y="172" width="66" height="96" rx="6" fill="#FFFFFF" stroke="#2B2B3A" stroke-width="2"/>
+  <rect x="306" y="178" width="54" height="84" rx="3" fill="#2A2850"/>
+  <circle cx="345" cy="197" r="9" fill="#FFF6D6"/>
+  <circle cx="337" cy="190" r="3.5" fill="#F2C4B0"/><circle cx="353" cy="189" r="3.5" fill="#CFE8DF"/>
+  <circle cx="352" cy="206" r="3.5" fill="#F7A8C4"/><circle cx="338" cy="205" r="3.5" fill="#FFD23F"/>
+  <circle cx="314" cy="190" r="1.2" fill="#FFF6D6"/><circle cx="320" cy="236" r="1.2" fill="#FFF6D6"/>
+  <circle cx="350" cy="242" r="1.2" fill="#FFF6D6"/><circle cx="313" cy="252" r="1.2" fill="#FFF6D6"/>
+  <line x1="333" y1="178" x2="333" y2="262" stroke="#FFFFFF" stroke-width="3"/>
+  <line x1="306" y1="222" x2="360" y2="222" stroke="#FFFFFF" stroke-width="3"/>
+
+  <!-- Sao -->
+  <polygon points="138,314 142.11,324.34 153.22,325.06 144.66,332.16 147.4,342.94 138,337 128.6,342.94 131.34,332.16 122.78,325.06 133.89,324.34" fill="#FFD23F" stroke="#2B2B3A" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M118 304L119.5 308.5L124 310L119.5 311.5L118 316L116.5 311.5L112 310L116.5 308.5Z" fill="#FFD23F"/>
+  <path d="M152 344L153.2 347.8L157 349L153.2 350.2L152 354L150.8 350.2L147 349L150.8 347.8Z" fill="#FFD23F"/>
+
+  <!-- Kệ + đinh ghim (nhóm A) -->
+  <rect x="91" y="436" width="144" height="12" fill="#5B4636" opacity=".18"/>
+  <rect x="88" y="432" width="144" height="12" fill="#C49A6C" stroke="#2B2B3A" stroke-width="1.5"/>
+  <path d="M100 444L114 444L100 458Z" fill="#B0875A" stroke="#2B2B3A" stroke-width="1"/>
+  <path d="M218 444L204 444L218 458Z" fill="#B0875A" stroke="#2B2B3A" stroke-width="1"/>
+  <ellipse class="tb" cx="104" cy="431" rx="8" ry="3"/><path class="tp" d="M100.5 430L107.5 430L104 412Z"/><line x1="102.8" y1="427" x2="103.4" y2="418" stroke="#FFFFFF" stroke-width="1"/>
+  <ellipse class="tb" cx="128" cy="431" rx="8" ry="3"/><path class="tp" d="M124.5 430L131.5 430L128 412Z"/><line x1="126.8" y1="427" x2="127.4" y2="418" stroke="#FFFFFF" stroke-width="1"/>
+  <ellipse class="tb" cx="152" cy="431" rx="8" ry="3"/><path class="tp" d="M148.5 430L155.5 430L152 412Z"/><line x1="150.8" y1="427" x2="151.4" y2="418" stroke="#FFFFFF" stroke-width="1"/>
+  <ellipse class="tb" cx="176" cy="431" rx="8" ry="3"/><path class="tp" d="M172.5 430L179.5 430L176 412Z"/><line x1="174.8" y1="427" x2="175.4" y2="418" stroke="#FFFFFF" stroke-width="1"/>
+  <ellipse class="tb" cx="200" cy="431" rx="8" ry="3"/><path class="tp" d="M196.5 430L203.5 430L200 412Z"/><line x1="198.8" y1="427" x2="199.4" y2="418" stroke="#FFFFFF" stroke-width="1"/>
+  <ellipse class="tb" cx="224" cy="431" rx="8" ry="3"/><path class="tp" d="M220.5 430L227.5 430L224 412Z"/><line x1="222.8" y1="427" x2="223.4" y2="418" stroke="#FFFFFF" stroke-width="1"/>
+
+  <!-- Băng keo vá -->
+  <circle cx="320" cy="400" r="19" fill="#FFFFFF" opacity=".6"/>
+  <rect x="304" y="394.5" width="32" height="11" rx="4" fill="#F4D58D" stroke="#2B2B3A" stroke-width="1.5" transform="rotate(-35 320 400)"/>
+  <rect x="304" y="394.5" width="32" height="11" rx="4" fill="#F4D58D" stroke="#2B2B3A" stroke-width="1.5" transform="rotate(35 320 400)"/>
+  <circle cx="320" cy="400" r="2" fill="#D9B65E"/>
+
+  <!-- Quạt + vùng gió (nhóm B), thổi sang trái -->
+  <rect x="170" y="684" width="182" height="36" rx="10" fill="#BFE9FF" opacity=".45"/>
+  <line x1="340" y1="692" x2="186" y2="692" stroke="#5BB8E6" stroke-width="2" stroke-dasharray="16 8" stroke-linecap="round" marker-end="url(#wind)"/>
+  <line x1="332" y1="702" x2="180" y2="702" stroke="#5BB8E6" stroke-width="2" stroke-dasharray="12 9" stroke-linecap="round" marker-end="url(#wind)"/>
+  <line x1="342" y1="712" x2="192" y2="712" stroke="#5BB8E6" stroke-width="2" stroke-dasharray="18 7" stroke-linecap="round" marker-end="url(#wind)"/>
+  <rect x="250" y="687" width="6" height="3.5" fill="#F2C4B0" transform="rotate(20 253 689)"/>
+  <rect x="214" y="707" width="6" height="3.5" fill="#FFD23F" transform="rotate(-25 217 709)"/>
+  <rect x="352" y="680" width="20" height="44" rx="6" fill="#4A7BD0" stroke="#2B2B3A" stroke-width="1.5"/>
+  <line x1="357" y1="686" x2="357" y2="718" stroke="#FFFFFF" stroke-width="1.2" opacity=".8"/>
+  <line x1="362" y1="686" x2="362" y2="718" stroke="#FFFFFF" stroke-width="1.2" opacity=".8"/>
+  <line x1="367" y1="686" x2="367" y2="718" stroke="#FFFFFF" stroke-width="1.2" opacity=".8"/>
+
+  <!-- Bánh sinh nhật + nến (nhóm D) -->
+  <rect x="179" y="775" width="68" height="36" rx="6" fill="#5B4636" opacity=".15"/>
+  <rect x="176" y="772" width="68" height="36" rx="6" fill="#F7A8C4" stroke="#2B2B3A" stroke-width="1.5"/>
+  <path d="M178 776h64v6q-4 6-8 0q-4 6-8 0q-4 6-8 0q-4 6-8 0q-4 6-8 0q-4 6-8 0q-4 6-8 0q-4 6-8 0z" fill="#FFFFFF"/>
+  <circle cx="191" cy="742" r="11" fill="#FFC83D" opacity=".3"/>
+  <circle cx="210" cy="742" r="11" fill="#FFC83D" opacity=".3"/>
+  <circle cx="229" cy="742" r="11" fill="#FFC83D" opacity=".3"/>
+  <rect x="188" y="752" width="6" height="20" fill="#FFFFFF" stroke="#2B2B3A" stroke-width="1"/>
+  <rect x="207" y="752" width="6" height="20" fill="#FFFFFF" stroke="#2B2B3A" stroke-width="1"/>
+  <rect x="226" y="752" width="6" height="20" fill="#FFFFFF" stroke="#2B2B3A" stroke-width="1"/>
+  <line x1="188" y1="762" x2="194" y2="757" stroke="#4A7BD0" stroke-width="1.5"/><line x1="188" y1="769" x2="194" y2="764" stroke="#4A7BD0" stroke-width="1.5"/>
+  <line x1="207" y1="762" x2="213" y2="757" stroke="#4A7BD0" stroke-width="1.5"/><line x1="207" y1="769" x2="213" y2="764" stroke="#4A7BD0" stroke-width="1.5"/>
+  <line x1="226" y1="762" x2="232" y2="757" stroke="#4A7BD0" stroke-width="1.5"/><line x1="226" y1="769" x2="232" y2="764" stroke="#4A7BD0" stroke-width="1.5"/>
+  <path d="M191 732C197 739 196 748 191 750C186 748 185 739 191 732Z" fill="#FF8A00" stroke="#2B2B3A" stroke-width=".8"/>
+  <path d="M191 740C194 744 193 748 191 749C189 748 188 744 191 740Z" fill="#FFC83D"/>
+  <path d="M210 732C216 739 215 748 210 750C205 748 204 739 210 732Z" fill="#FF8A00" stroke="#2B2B3A" stroke-width=".8"/>
+  <path d="M210 740C213 744 212 748 210 749C208 748 207 744 210 740Z" fill="#FFC83D"/>
+  <path d="M229 732C235 739 234 748 229 750C224 748 223 739 229 732Z" fill="#FF8A00" stroke="#2B2B3A" stroke-width=".8"/>
+  <path d="M229 740C232 744 231 748 229 749C227 748 226 744 229 740Z" fill="#FFC83D"/>
+
+  <!-- Quỹ đạo dự đoán: dừng ở va chạm đầu tiên -->
+  <circle class="dot" cx="262.5" cy="568" r="4"/><circle class="dot" cx="272.4" cy="558.5" r="3.9"/>
+  <circle class="dot" cx="281.6" cy="549.7" r="3.8"/><circle class="dot" cx="290.1" cy="541.7" r="3.7"/>
+  <circle class="dot" cx="297.9" cy="534.4" r="3.6"/><circle class="dot" cx="304.9" cy="527.9" r="3.5"/>
+  <circle class="dot" cx="311.3" cy="522" r="3.4"/><circle class="dot" cx="317.7" cy="516.1" r="3.3"/>
+  <circle class="dot" cx="323.3" cy="511.1" r="3.2"/><circle class="dot" cx="329" cy="505.9" r="3.1"/>
+  <circle class="dot" cx="333.9" cy="501.5" r="3"/><circle class="dot" cx="338.9" cy="497" r="2.9"/>
+  <circle cx="343" cy="493" r="29" fill="none" stroke="#1D9E75" stroke-width="2" stroke-dasharray="4 4" opacity=".85"/>
+  <line x1="365" y1="485" x2="359" y2="479" stroke="#1D9E75" stroke-width="2" stroke-linecap="round"/>
+  <line x1="364" y1="493" x2="356" y2="493" stroke="#1D9E75" stroke-width="2" stroke-linecap="round"/>
+  <line x1="365" y1="501" x2="359" y2="507" stroke="#1D9E75" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Vòng khí: 3 ô còn, 1 ô sắp tiêu (viền đứt), 1 ô đã hết -->
+  <circle cx="230" cy="600" r="40" fill="none" stroke="#2B2B3A" stroke-width="9" opacity=".3"/>
+  <path class="seg" d="M232.09 560.06A40 40 0 0 1 267.34 585.66" stroke="#1D9E75"/>
+  <path class="seg" d="M268.64 589.65A40 40 0 0 1 255.17 631.08" stroke="#1D9E75"/>
+  <path class="seg" d="M251.78 633.55A40 40 0 0 1 208.22 633.55" stroke="#1D9E75"/>
+  <path class="seg" d="M204.83 631.08A40 40 0 0 1 191.36 589.65" stroke="#FFFFFF"/>
+  <path d="M204.83 631.08A40 40 0 0 1 191.36 589.65" fill="none" stroke="#1D9E75" stroke-width="6" stroke-dasharray="4 3"/>
+  <path class="seg" d="M192.66 585.66A40 40 0 0 1 227.91 560.06" stroke="#D8D2C8"/>
+
+  <!-- Bóng Pốp: dây đứng sững vì thế giới đang dừng -->
+  <path d="M230 636C239 648 222 661 233 676" fill="none" stroke="#6B5B4F" stroke-width="1.6"/>
+  <circle cx="230" cy="600" r="29" fill="#E63946" stroke="#2B2B3A" stroke-width="3"/>
+  <ellipse cx="219" cy="589" rx="8" ry="4.5" fill="#FFD6D6" opacity=".9" transform="rotate(-35 219 589)"/>
+  <path d="M226 629L234 629L230 636Z" fill="#C92F3B" stroke="#2B2B3A" stroke-width="1.2"/>
+  <ellipse cx="220" cy="603" rx="3.6" ry="5" fill="#2B2B3A"/>
+  <circle cx="219" cy="601" r="1.2" fill="#FFFFFF"/>
+  <path d="M231 602Q235 598 239 602" fill="none" stroke="#2B2B3A" stroke-width="2.2" stroke-linecap="round"/>
+  <path d="M223 613Q228 615.5 233 612" fill="none" stroke="#2B2B3A" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Kim (ghim may) chĩa vào bóng + ngón tay -->
+  <polygon points="196.8,633.2 164.9,672.1 157.9,665.1" fill="#C9CED6" stroke="#2B2B3A" stroke-width="1" stroke-linejoin="round"/>
+  <polygon points="196.8,633.2 190.4,641 189,639.6" fill="#3A3F4B"/>
+  <circle cx="157.2" cy="672.8" r="6" fill="#1D9E75" stroke="#2B2B3A" stroke-width="1.5"/>
+  <circle cx="145" cy="685" r="18" fill="#EEEDFE" opacity=".8" stroke="#534AB7" stroke-width="1.2"/>
+
+  <!-- Viền xanh nhạt: thế giới đang dừng -->
+  <rect x="58" y="62" width="344" height="784" rx="30" fill="none" stroke="#7FD3FF" stroke-width="10" opacity=".5"/>
+
+  <!-- Thanh trạng thái máy -->
+  <text x="76" y="82" font-size="12" font-weight="bold" fill="#2B2B3A">9:41</text>
+  <rect x="188" y="64" width="84" height="24" rx="12" fill="#1E1E24"/>
+  <rect x="362" y="72" width="22" height="11" rx="3" fill="none" stroke="#2B2B3A" stroke-width="1.4"/>
+  <rect x="364" y="74" width="15" height="7" rx="1.5" fill="#2B2B3A"/>
+  <rect x="385" y="75.5" width="2" height="4" fill="#2B2B3A"/>
+
+  <!-- HUD trên: Tạm dừng · màn · 3 mục tiêu · Chơi lại -->
+  <rect class="lip" x="64" y="103" width="40" height="40" rx="14"/>
+  <rect class="pill" x="64" y="100" width="40" height="40" rx="14"/>
+  <rect x="77.5" y="111" width="4.5" height="18" rx="1.5" fill="#2B2B3A"/>
+  <rect x="86" y="111" width="4.5" height="18" rx="1.5" fill="#2B2B3A"/>
+  <text x="111" y="126" font-size="15" font-weight="bold" fill="#2B2B3A">1-7</text>
+
+  <rect class="lip" x="142" y="106" width="48" height="34" rx="17"/>
+  <rect class="pill" x="142" y="103" width="48" height="34" rx="17"/>
+  <line x1="156" y1="110" x2="156" y2="130" stroke="#2B2B3A" stroke-width="2" stroke-linecap="round"/>
+  <path d="M156.5 110L169 114.5L156.5 119Z" fill="#1D9E75" stroke="#2B2B3A" stroke-width="1"/>
+  <circle cx="179" cy="120" r="5.5" fill="none" stroke="#2B2B3A" stroke-width="1.5"/>
+
+  <rect class="lip" x="194" y="106" width="48" height="34" rx="17"/>
+  <rect class="pill" x="194" y="103" width="48" height="34" rx="17"/>
+  <polygon points="210,112 212.06,117.17 217.61,117.53 213.33,121.08 214.7,126.47 210,123.5 205.3,126.47 206.67,121.08 202.39,117.53 207.94,117.17" fill="#FFD23F" stroke="#2B2B3A" stroke-width="1.2" stroke-linejoin="round"/>
+  <circle cx="231" cy="120" r="5.5" fill="none" stroke="#2B2B3A" stroke-width="1.5"/>
+
+  <rect class="lip" x="246" y="106" width="58" height="34" rx="17"/>
+  <rect class="pill" x="246" y="103" width="58" height="34" rx="17"/>
+  <line x1="256" y1="128" x2="263" y2="112" stroke="#9AA3AF" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="256" cy="128" r="2.6" fill="#1D9E75"/>
+  <text x="267" y="125" font-size="12" font-weight="bold" fill="#2B2B3A">1/2</text>
+  <circle cx="293" cy="120" r="5.5" fill="none" stroke="#2B2B3A" stroke-width="1.5"/>
+
+  <rect class="lip" x="356" y="103" width="40" height="40" rx="14"/>
+  <rect class="pill" x="356" y="100" width="40" height="40" rx="14"/>
+  <path d="M384 120A8 8 0 1 1 381.66 114.34" fill="none" stroke="#2B2B3A" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M378.5 110.5L386.5 113L381 119Z" fill="#2B2B3A"/>
+
+  <!-- Thanh khí chia ô -->
+  <text x="111" y="158" font-size="11" font-weight="bold" fill="#2B2B3A">Air</text>
+  <rect x="152" y="148" width="28" height="10" rx="5" fill="#1D9E75" stroke="#2B2B3A" stroke-width="1.2"/>
+  <rect x="183" y="148" width="28" height="10" rx="5" fill="#1D9E75" stroke="#2B2B3A" stroke-width="1.2"/>
+  <rect x="214" y="148" width="28" height="10" rx="5" fill="#1D9E75" stroke="#2B2B3A" stroke-width="1.2"/>
+  <rect x="245" y="148" width="28" height="10" rx="5" fill="#FFFFFF" stroke="#1D9E75" stroke-width="1.6" stroke-dasharray="3 2"/>
+  <rect x="276" y="148" width="28" height="10" rx="5" fill="#D8D2C8" stroke="#2B2B3A" stroke-width="1.2"/>
+
+  <!-- Nhãn thế giới đang dừng -->
+  <rect x="150" y="166" width="128" height="22" rx="11" fill="#2B2B3A" opacity=".8"/>
+  <rect x="160" y="171.5" width="3" height="11" rx="1" fill="#FFFFFF"/>
+  <rect x="166" y="171.5" width="3" height="11" rx="1" fill="#FFFFFF"/>
+  <text x="175" y="181" font-size="11" fill="#FFFFFF">Time stopped</text>
+
+  <!-- HUD dưới: Xem màn · Gợi ý -->
+  <rect class="lip" x="64" y="793" width="62" height="36" rx="18"/>
+  <rect class="pill" x="64" y="790" width="62" height="36" rx="18"/>
+  <path d="M74 808Q84 799 94 808Q84 817 74 808Z" fill="#FFFFFF" stroke="#2B2B3A" stroke-width="1.6"/>
+  <circle cx="84" cy="808" r="3" fill="#2B2B3A"/>
+  <text x="99" y="812" font-size="11" font-weight="bold" fill="#2B2B3A">Look</text>
+  <rect class="lip" x="334" y="793" width="62" height="36" rx="18"/>
+  <rect class="pill" x="334" y="790" width="62" height="36" rx="18"/>
+  <circle cx="350" cy="804" r="6" fill="#FFD23F" stroke="#2B2B3A" stroke-width="1.4"/>
+  <rect x="347" y="810" width="6" height="5" rx="1" fill="#9AA3AF" stroke="#2B2B3A" stroke-width="1"/>
+  <text x="360" y="812" font-size="11" font-weight="bold" fill="#2B2B3A">Hint</text>
+  <circle cx="394" cy="792" r="9" fill="#1D9E75" stroke="#FFFFFF" stroke-width="1.5"/>
+  <text x="394" y="796" font-size="10" font-weight="bold" fill="#FFFFFF" text-anchor="middle">2</text>
+  <rect x="180" y="840" width="100" height="4.5" rx="2.25" fill="#2B2B3A" opacity=".55"/>
+
+  <!-- Số chú thích -->
+  <circle class="mk" cx="126" cy="90" r="9"/><text class="mt" x="126" y="93.5">1</text>
+  <circle class="mk" cx="318" cy="153" r="9"/><text class="mt" x="318" y="156.5">2</text>
+  <circle class="mk" cx="278" cy="642" r="9"/><text class="mt" x="278" y="645.5">3</text>
+  <circle class="mk" cx="194" cy="552" r="9"/><text class="mt" x="194" y="555.5">4</text>
+  <circle class="mk" cx="116" cy="700" r="9"/><text class="mt" x="116" y="703.5">5</text>
+  <circle class="mk" cx="292" cy="470" r="9"/><text class="mt" x="292" y="473.5">6</text>
+  <circle class="mk" cx="290" cy="284" r="9"/><text class="mt" x="290" y="287.5">7</text>
+  <circle class="mk" cx="98" cy="398" r="9"/><text class="mt" x="98" y="401.5">8</text>
+  <circle class="mk" cx="184" cy="668" r="9"/><text class="mt" x="184" y="671.5">9</text>
+  <circle class="mk" cx="258" cy="752" r="9"/><text class="mt" x="258" y="755.5">10</text>
+  <circle class="mk" cx="164" cy="312" r="9"/><text class="mt" x="164" y="315.5">11</text>
+  <circle class="mk" cx="346" cy="386" r="9"/><text class="mt" x="346" y="389.5">12</text>
+  <circle class="mk" cx="138" cy="177" r="9"/><text class="mt" x="138" y="180.5">13</text>
+  <circle class="mk" cx="146" cy="808" r="9"/><text class="mt" x="146" y="811.5">14</text>
+</g>
+
+<!-- Chú thích -->
+<text class="th" x="450" y="66">Chú thích</text>
+<circle class="mk" cx="462" cy="92" r="9"/><text class="mt" x="462" y="95.5">1</text>
+<text class="t" x="478" y="96">Thanh trên: Tạm dừng · màn · 3 mục tiêu</text>
+<text class="t" x="478" y="111">(Đích, Sao, số cú chọc/Par) · Chơi lại</text>
+<circle class="mk" cx="462" cy="146" r="9"/><text class="mt" x="462" y="149.5">2</text>
+<text class="t" x="478" y="150">Thanh khí chia ô: mỗi ô = 1 cú chọc.</text>
+<text class="t" x="478" y="165">Ô viền đứt = phần cú này sẽ tiêu</text>
+<circle class="mk" cx="462" cy="200" r="9"/><text class="mt" x="462" y="203.5">3</text>
+<text class="t" x="478" y="204">Vòng khí quanh bóng, chỉ hiện khi ngắm.</text>
+<text class="t" x="478" y="219">Viền tối giữ tương phản trên mọi nền</text>
+<circle class="mk" cx="462" cy="254" r="9"/><text class="mt" x="462" y="257.5">4</text>
+<text class="t" x="478" y="258">Mặt bóng: mắt nhìn theo ngón tay,</text>
+<text class="t" x="478" y="273">nheo một mắt khi ngắm</text>
+<circle class="mk" cx="462" cy="308" r="9"/><text class="mt" x="462" y="311.5">5</text>
+<text class="t" x="478" y="312">Ngón tay và kim: thả tay là chọc,</text>
+<text class="t" x="478" y="327">bóng bay ngược hướng kim</text>
+<circle class="mk" cx="462" cy="362" r="9"/><text class="mt" x="462" y="365.5">6</text>
+<text class="t" x="478" y="366">Quỹ đạo dự đoán, dừng ở va chạm đầu</text>
+<text class="t" x="478" y="381">tiên (bóng mờ nét đứt)</text>
+<circle class="mk" cx="462" cy="416" r="9"/><text class="mt" x="462" y="419.5">7</text>
+<text class="t" x="478" y="420">Đích: ô cửa sổ nhìn ra</text>
+<text class="t" x="478" y="435">Mặt Trăng Bóng Bay</text>
+<circle class="mk" cx="462" cy="470" r="9"/><text class="mt" x="462" y="473.5">8</text>
+<text class="t" x="478" y="474">Nhóm A, gây rò: đinh ghim bạc,</text>
+<text class="t" x="478" y="489">mũi nhọn, lóe sáng</text>
+<circle class="mk" cx="462" cy="524" r="9"/><text class="mt" x="462" y="527.5">9</text>
+<text class="t" x="478" y="528">Nhóm B, lực: gió quạt,</text>
+<text class="t" x="478" y="543">vệt trong mờ chỉ hướng</text>
+<circle class="mk" cx="462" cy="578" r="9"/><text class="mt" x="462" y="581.5">10</text>
+<text class="t" x="478" y="582">Nhóm D, nổ ngay: lửa nến cam,</text>
+<text class="t" x="478" y="597">luôn chập chờn</text>
+<circle class="mk" cx="462" cy="632" r="9"/><text class="mt" x="462" y="635.5">11</text>
+<text class="t" x="478" y="636">Sao (mục tiêu ★ thứ hai): lệch khỏi</text>
+<text class="t" x="478" y="651">đường chính, sát hàng ghim</text>
+<circle class="mk" cx="462" cy="686" r="9"/><text class="mt" x="462" y="689.5">12</text>
+<text class="t" x="478" y="690">Băng keo vá: vá mọi lỗ rò,</text>
+<text class="t" x="478" y="705">hồi 30% khí</text>
+<circle class="mk" cx="462" cy="740" r="9"/><text class="mt" x="462" y="743.5">13</text>
+<text class="t" x="478" y="744">Viền xanh nhạt và nhãn "Time stopped":</text>
+<text class="t" x="478" y="759">thế giới đang dừng</text>
+<circle class="mk" cx="462" cy="794" r="9"/><text class="mt" x="462" y="797.5">14</text>
+<text class="t" x="478" y="798">Thanh dưới: Look (xem màn) · Hint (còn 2),</text>
+<text class="t" x="478" y="813">trong tầm ngón cái</text>
+<text class="ts" x="450" y="860">Màn hình 9:20; bóng ~0.9 đơn vị khi đầy (§15.4).</text>
+<text class="ts" x="450" y="875">Chữ trong game: tiếng Anh (§10.8). Màu: art-bible.svg</text>
+</svg>

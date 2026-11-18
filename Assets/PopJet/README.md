@@ -1,44 +1,75 @@
 # Pop Jet - hướng dẫn setup (Unity 2D)
 
-Chạy được trên Unity 2021 LTS trở lên (có xử lý riêng cho Unity 6: `linearDamping`) và hỗ trợ cả Input System mới lẫn cũ.
+Chạy trên Unity 6 (dùng `linearVelocity`/`linearDamping`, có nhánh `#if` cho bản cũ) và hỗ trợ cả Input System mới lẫn cũ.
+Thiết kế game đầy đủ: [Docs/GDD.md](Docs/GDD.md). Giai đoạn 1 của GDD (§16.1) đã có trong code.
 
 ## 1. Cài file
 
-Copy cả thư mục `PopJet` vào `Assets/` của project. Không cần package nào thêm.
+Copy cả thư mục `PopJet` vào `Assets/` của project. Không cần package nào thêm ngoài Cinemachine 3, Input System và uGUI (đã có trong project).
 
 ## 2. Danh sách script
 
 | Script | Gắn vào | Việc chính |
 |---|---|---|
-| `BalloonController` | Bóng | Khí, lực đẩy, lỗ chọc, lỗ rò, trạng thái |
-| `BalloonInput` | Object rỗng `Input` | Giữ - kéo - thả, kim, mũi tên hướng bay |
+| `BalloonController` | Bóng | Khí, lực đẩy, lỗ chọc, lỗ rò, trạng thái, đếm cú chọc, `Pop(lý do)` |
+| `BalloonInput` | Object rỗng `Input` | Giữ - kéo - thả, kim, bỏ qua chạm trên UI, sự kiện `AimStarted`/`AimEnded` |
 | `BalloonFeedback` | Bóng | Âm thanh + particle theo sự kiện |
 | `Spike` | Gai | Chạm bóng thì tạo thêm lỗ rò |
-| `BalloonBounce` | Bóng | Bóp dẹt + rung mềm và tiếng "bộp" khi va tường (độ nảy thật do `PhysicsMaterial2D`) |
+| `BalloonBounce` | Bóng | Bóp dẹt + rung mềm và tiếng "bộp" khi va tường, sự kiện `Bounced` (độ nảy thật do `PhysicsMaterial2D`) |
 | `PatchPickup` | Keo vá | Vá hết lỗ rò, hồi 30% khí |
 | `Fan` | Quạt | Đẩy bóng theo trục +X local |
 | `ButtonSwitch` | Nút | Mở cửa gán sẵn |
 | `Door` | Cửa | Trượt mở/đóng |
 | `GoalZone` | Đích | Hoàn thành màn |
-| `LevelManager` | Object rỗng | Thất bại mềm (tự chơi lại), thắng, chuyển màn |
-| `PopJetDebug` | Object rỗng | Overlay state/khí/lỗ rò để tune (xóa khi build thật) |
+| `LevelManager` | Object rỗng | Thất bại mềm (tự chơi lại hoặc chạm để chơi lại ngay), thắng, chuyển màn, phát hiện kẹt |
+| `PopJetDebug` | Object rỗng | Overlay state/khí/lỗ rò ở góc dưới trái để tune; chỉ vẽ trong Editor và Development Build |
+| **Giai đoạn 1** | | |
+| `MobileBootstrap` | (không gắn, tự chạy) | 60 fps, khóa màn dọc, không cho màn hình tự tắt |
+| `CameraAspectFit` | `CM FollowCam` | Giữ chiều ngang nhìn thấy cố định trên mọi tỉ lệ màn hình |
+| `TrajectoryPreview` | `Input` | Chấm quỹ đạo dự đoán khi ngắm, dừng ở va chạm đầu tiên (bóng mờ) |
+| `AirRing` | `Input` | Vòng khí quanh bóng khi ngắm, đoạn nhấp nháy = khí cú này sẽ tiêu |
+| `BalloonFace` | Bóng | Mắt, miệng, highlight, biểu cảm (dựng lúc Play) |
+| `BalloonString` | Bóng | Dây bóng mềm (verlet), rơi xuống khi bóng vỡ |
+| `LeakStreamFX` | Bóng | Vết lỗ, dòng khí phun liên tục và tiếng xì cho từng lỗ rò; băng keo khi vá |
+| `Haptics` + `BalloonHaptics` | (static) + Bóng | Rung máy Android/iOS theo sự kiện của bóng |
+| `TimeFreezeAudio` | `Music` | Nhạc bị lọc low-pass khi thế giới dừng, tiếng tick/vút |
+| `PopJetHud` + `AirBarUI` + `SafeAreaFitter` | `HUD` | Nút Retry, số cú chọc, thanh khí chia ô, lý do thua, "Stuck?" |
+| `GameText` | (static) | Mọi chữ trong game (tiếng Anh) gom một chỗ |
+| `Plugins/iOS/PopJetHaptics.mm` | (plugin) | Rung trên iOS, chỉ build cho iOS |
 
-## 3. Dựng scene mẫu (khoảng 10 phút)
+## 3. Dựng scene mẫu
 
-**Cách nhanh:** menu `Tools > PopJet > Build Sample Scene` tự dựng toàn bộ scene bên dưới vào `Assets/PopJet/Scenes/PopJet_Sample.unity` (kèm sprite, particle, âm thanh placeholder).
+**Cách nhanh:** menu `Tools > PopJet > Build Sample Scene` tự dựng toàn bộ scene vào `Assets/PopJet/Scenes/PopJet_Sample.unity` (kèm sprite, particle, âm thanh, nhạc placeholder, HUD và mọi tính năng Giai đoạn 1). Chạy headless khi Editor đã đóng:
 
-**Camera (Cinemachine 3, không tự code follow):** Main Camera Orthographic + `CinemachineBrain`, màn dọc 9:16 (Game view đặt Portrait). Object `CM FollowCam` có `CinemachineCamera` (Follow = `Balloon`, Ortho Size 3.5) + `CinemachinePositionComposer` (Damping 0.4, Dead Zone 10%, Lookahead 0.25 giây). **Không** dùng `CinemachineConfiner2D`: chặn camera ở mép màn thì bóng sát góc sẽ nằm sát mép màn hình, không còn chỗ kéo kim. Bật `Interpolate` cho `Rigidbody2D` của bóng để camera không giật.
+```
+Unity.exe -batchmode -quit -projectPath "E:/Unity/my/Test-BB" -executeMethod PopJet.EditorTools.PopJetSceneBuilder.BuildFromCommandLine -logFile -
+```
+
+**Menu khác:**
+
+| Menu | Việc |
+|---|---|
+| `Tools > PopJet > Add Phase 1 Features To Open Scene` | Thêm tính năng Giai đoạn 1 vào scene đang mở, không dựng lại (giữ chỉnh tay). Chạy lại không bị nhân đôi |
+| `Tools > PopJet > Add Balloon Pop To Open Scene` | Chỉ thêm hiệu ứng vỡ bóng vào scene đang mở |
+| `Tools > PopJet > Apply Mobile Player Settings` | Player Settings: Default Orientation = Portrait, tắt xoay ngang |
+
+**Lưu ý khi chạy lại builder:** nó ghi đè `PopJet_Sample.unity`, các prefab trong `Prefabs/` và cài đặt import của sprite sinh tự động (`Circle`, `Square`, `Triangle`, `SoftDot`, `Ring`, `Smile`, `RoundRect`). Art thật (kể cả art AI theo GDD §9.6) đặt tên khác, trong thư mục con như `Art/World1/`.
+
+**Camera (Cinemachine 3, không tự code follow):** Main Camera Orthographic + `CinemachineBrain`, màn dọc 9:16. Object `CM FollowCam` có `CinemachineCamera` (Follow = `Balloon`, Ortho Size 3.5 ở tỉ lệ 9:16) + `CinemachinePositionComposer` (Damping 0.4, Dead Zone 10%, Lookahead 0.25 giây) + `CameraAspectFit`. **Không** dùng `CinemachineConfiner2D`: chặn camera ở mép màn thì bóng sát góc sẽ nằm sát mép màn hình, không còn chỗ kéo kim. Bật `Interpolate` cho `Rigidbody2D` của bóng để camera không giật.
 
 **Bóng (`Balloon`)**
 1. Tạo Sprite hình tròn (`Create > 2D > Sprites > Circle`), đặt tên `Balloon`.
 2. Add `Rigidbody2D`, `CircleCollider2D`, `BalloonController`. Script tự đặt gravity = 0, damping, khóa xoay.
 3. (Tùy chọn) Add `AudioSource` + `BalloonFeedback`, kéo clip và particle vào.
 4. Nảy mềm: gán `PhysicsMaterial2D` (Bounciness 0.85, Friction 0.05) vào `CircleCollider2D`. Đưa `SpriteRenderer` xuống object con `Visual`, Add `BalloonBounce` vào bóng rồi kéo `Visual` vào ô `Visual` (không bóp scale gốc vì scale gốc thể hiện lượng khí).
+5. Mặt bóng, dây, dòng khí rò, rung: dùng menu `Add Phase 1 Features To Open Scene`. Mặt bóng được dựng lúc Play nên không thấy trong Scene view khi chưa chạy.
 
 **Input**
 1. Tạo object rỗng `Input`, Add `BalloonInput`, kéo `Balloon` vào.
 2. Tạo Sprite `Needle` (hình tam giác nhỏ, **đầu nhọn hướng lên**), kéo vào ô `Needle`.
-3. Tạo object `FlightArrow` với `LineRenderer` (Width 0.08, Use World Space bật), kéo vào ô `Flight Arrow`.
+3. Ô `Flight Arrow` (mũi tên thẳng) không còn cần: `TrajectoryPreview` thay thế. Menu Giai đoạn 1 tự tắt mũi tên cũ.
+
+**HUD:** Canvas Screen Space Overlay, Canvas Scaler 1080×1920 (Match = 0, theo chiều ngang), mọi thứ nằm trong `SafeArea`. Cần `EventSystem` với `InputSystemUIInputModule` (project chỉ bật Input System mới, `StandaloneInputModule` sẽ báo lỗi). Chữ đang dùng UI Text thường với font có sẵn; Giai đoạn 2 đổi sang TextMeshPro.
 
 **Vật tương tác** (mọi vật cần Collider2D; các vật là trigger script tự bật `isTrigger`)
 
@@ -61,35 +92,54 @@ Tất cả đều là starting value, không có nguồn chuẩn.
 |---|---|---|---|
 | Lực chọc / thời gian | 6 / 1.5 giây | `BalloonController` | Bóng bay không đủ xa: tăng lực trước, không tăng thời gian |
 | Khí mất mỗi lần chọc | 0.18 | `BalloonController` | Người mới hết khí ở 5 màn đầu: giảm xuống 0.10-0.15 |
-| Lỗ rò: lực / thời gian / khí | 1.8 / 3 giây / 0.06 | `BalloonController` | Bóng "tự bay lung tung": giảm lực rò trước |
+| Lỗ rò: lực / thời gian / khí | 1.8 / 3 giây / 0.06 | `BalloonController` | Bóng "tự bay lung tung": giảm lực rò trước. Lỗ rò tiết kiệm khí hơn cú chọc ~1.8 lần; GDD giữ làm kỹ năng "rò chiến thuật" |
 | Cooldown giữa 2 lỗ rò | 0.5 giây | `BalloonController` | Trượt dọc gai vẫn bị kẹt: tăng cooldown |
 | Số lỗ rò tối đa | 4 | `BalloonController` | |
 | Vùng hủy | 40% bán kính bóng | `BalloonInput` | Người mới hủy nhầm: thu nhỏ |
 | Lực quạt | 4 | `Fan` | Quạt quá yếu/mạnh so với lực chọc: chỉnh theo tỉ lệ với lực chọc |
 | Dừng thế giới khi giữ ngắm | Bật | `BalloonInput` → `Freeze World While Aiming` | Đang giữ chọn hướng kim thì `Time.timeScale = 0` (vật lý, quạt, cửa, particle, camera đều dừng). `LevelManager.PlayTime` dùng unscaled time nên vẫn đếm. Đồng hồ bắt đầu từ lần chọc đầu, dừng khi thắng/thua |
-| Hết khí = vỡ tung | Bật | `BalloonController` → `Pop When Empty` | Bóng đứng yên, ẩn đi, `BalloonFeedback` bắn prefab `PopBurst` (mảnh vỡ cùng màu bóng + chớp sáng + khí trắng), phát `Pop Clips`, gọi `On Popped` → `CinemachineImpulseSource.GenerateImpulse` rung camera (listener trên `CM FollowCam`). Tắt thì quay về kiểu xẹp rơi với `Empty Gravity Scale` |
-| Rung camera khi vỡ | biên độ 0.18, 0.35 giây | `Balloon` → `CinemachineImpulseSource` (`Default Velocity`, `Impulse Duration`) | Rung chóng mặt: giảm biên độ. Không cảm thấy nổ: tăng lên 0.3 |
-| Trọng lực khi đang chơi | 0.05 (rơi ~0.33 đơn vị/giây) | `BalloonController` → `Play Gravity Scale` | Bóng đứng im trước lần chọc đầu (state `Ready`), sau đó rơi chậm. Rơi nhanh quá/khó giữ bóng: giảm; không thấy áp lực: tăng 0.02 mỗi lần |
-| Khí hồi khi ăn keo | 0.3 (gấp 3 mức cũ 0.1) | `PatchPickup` | Màn quá dễ vì keo hồi quá nhiều: giảm về 0.2 |
+| Hết khí = vỡ tung | Bật | `BalloonController` → `Pop When Empty` | Bóng đứng yên, ẩn đi, `BalloonFeedback` bắn prefab `PopBurst`, phát `Pop Clips`, gọi `On Popped` → rung camera. Tắt thì quay về kiểu xẹp rơi với `Empty Gravity Scale`. `Pop(lý do)` luôn vỡ tung |
+| Rung camera khi vỡ | biên độ 0.18, 0.35 giây | `Balloon` → `CinemachineImpulseSource` | Rung chóng mặt: giảm biên độ. Không cảm thấy nổ: tăng lên 0.3 |
+| Trọng lực khi đang chơi | 0.05 (rơi ~0.33 đơn vị/giây) | `BalloonController` → `Play Gravity Scale` | Rơi nhanh quá/khó giữ bóng: giảm; không thấy áp lực: tăng 0.02 mỗi lần |
+| Khí hồi khi ăn keo | 0.3 | `PatchPickup` | Màn quá dễ vì keo hồi quá nhiều: giảm về 0.2 |
 | Độ nảy / ma sát bóng | 0.85 / 0.05 | `BalloonBouncy.physicsMaterial2D` | Bóng "bật như cao su": giảm bounciness. Bóng dính tường: giảm friction |
 | Bóp dẹt tối đa / tốc độ dẹt hết cỡ | 0.35 / 2.5 | `BalloonBounce` | Không thấy mềm: tăng `Max Squash`. Rung quá lâu: tăng `Spring Damping` |
-| Camera: damping / dead zone / ortho size | 0.4 / 10% / 3.5 | `CM FollowCam` | Camera trễ quá: giảm damping. Không thấy đường bay: tăng ortho size hoặc lookahead |
+| Camera: damping / dead zone / ortho size | 0.4 / 10% / 3.5 ở 9:16 | `CM FollowCam`, `CameraAspectFit` | Camera trễ quá: giảm damping. Không thấy đường bay: tăng `Reference Ortho Size` |
+| **Giai đoạn 1** | | | |
+| Độ dài quỹ đạo dự đoán | 0.6 giây hoặc tới va chạm đầu | `TrajectoryPreview` → `Preview Seconds` | Người mới đoán sai hướng/quãng bay: 1.0. Quá dễ (★Par > 60%): 0.4 |
+| Vòng khí: 1 ô = 1 cú chọc | `Vent Air Cost` | `AirRing`, `AirBarUI` | Người chơi không trả lời được "còn mấy cú": thêm số đếm |
+| Tự chơi lại sau khi thua | 1.2 giây, chạm để bỏ qua sau 0.25 giây | `LevelManager` | Trung vị nổ → chạm lại > 3 giây: giảm còn 0.8 |
+| Phát hiện kẹt | khí < 1 cú, tốc độ < 0.05, trong 3 giây | `LevelManager` | Người chơi phải chờ lâu khi kẹt: giảm còn 2 giây |
+| Chữ lý do thua | hiện 1.2 giây, cao hơn chỗ nổ 150 | `PopJetHud` | |
+| Nhạc khi ngắm | low-pass 800 Hz, −4 dB, vào 0.15 / ra 0.2 giây | `TimeFreezeAudio` | Người chơi không nhận ra "thế giới dừng": 500 Hz |
+| Rung khi nảy | từ độ mạnh 0.35, cách nhau ≥ 0.08 giây | `BalloonHaptics` | Rung quá nhiều khi lăn dọc tường: tăng ngưỡng |
+| FPS | 60 | `MobileBootstrap.TargetFps` | Máy yếu nóng/tụt pin: thử 30 cho menu |
 
-**Tuning vật lý:** `Mass` = 1 và damping 1.5 cho vận tốc tối đa khoảng 4 đơn vị/giây khi xì đủ lực. Nếu bóng nặng hoặc nhẹ quá, chỉnh `Damping` và lực chọc cùng nhau.
+**Tuning vật lý:** `Mass` = 1 và damping 1.5 cho vận tốc tối đa khoảng 4 đơn vị/giây khi xì đủ lực. Nếu bóng nặng hoặc nhẹ quá, chỉnh `Damping` và lực chọc cùng nhau. `TrajectoryPreview` tích phân cùng công thức nên tự khớp khi đổi các số này.
 
 ## 5. Playtest nhanh (smoke test)
 
 | Test | Cách thử | Đạt khi |
 |---|---|---|
 | Người mới | Đưa máy cho người chưa biết luật, không nói gì | Đoán đúng hướng bay ≥ 8/10 lần trong 2 phút |
-| Stress | Chạm liên tục, kéo ra ngoài màn, thả giữa chừng | Không lỗi, không kẹt state Aiming |
-| Gai | Cho bóng trượt dọc thanh gai | Không sinh quá 4 lỗ cùng lúc, bóng không bị kẹt |
-| Hết khí | Chọc đến khi hết | Bóng xẹp, rơi nhẹ, tự chơi lại sau 1.5 giây |
-| Vá | Bị gai rồi chạm keo | Lỗ rò dừng ngay, lực rò biến mất |
+| Stress | Chạm liên tục, kéo ra ngoài màn, thả giữa chừng, chạm lên nút Retry | Không lỗi, không kẹt state Aiming, chạm lên nút không bắt đầu ngắm |
+| Gai | Cho bóng trượt dọc thanh gai | Không sinh quá 4 lỗ cùng lúc, bóng không bị kẹt, mỗi lỗ có dòng khí và tiếng xì |
+| Hết khí | Chọc đến khi hết | Bóng nổ, hiện "Out of air!", tự chơi lại sau 1.2 giây (chạm để chơi lại ngay) |
+| Vá | Bị gai rồi chạm keo | Lỗ rò dừng ngay, dòng khí tắt, miếng băng keo chéo xuất hiện |
+| Quỹ đạo | Giữ trên bóng, kéo quanh | Chấm quỹ đạo dừng ở tường, cú cuối thì chấm và vòng khí chuyển cam |
+| Kẹt | Còn < 1 cú chọc, để bóng nằm yên ở góc | Sau 3 giây: "Stuck?" và nút Retry nhấp nháy |
+| Màn hình | Game view 9:16, 9:20 và 3:4 | Chiều ngang thấy như nhau ở 9:16 và 9:20; HUD nằm trong safe area |
+
+**Test tự động:** `Tests/PlayMode/PopJetSmokeTest.cs` chạy scene mẫu và kích hoạt ngắm, chọc, rò, vá, nổ, tự chơi lại. Chạy trong `Window > General > Test Runner > PlayMode`, hoặc headless (Editor phải đóng):
+
+```
+Unity.exe -batchmode -projectPath "E:/Unity/my/Test-BB" -runTests -testPlatform PlayMode -testResults results.xml -logFile -
+```
 
 ## 6. Lưu ý
 
 - Sprite kim cần đầu nhọn hướng lên (+Y), script xoay sao cho đầu kim chĩa vào bóng.
 - Particle khí thoát nên phát theo hướng +Y local.
-- Nếu bạn dùng UI (Canvas), cần chặn chạm xuyên UI: script này chưa xử lý, vì scene mẫu chưa có UI.
-- Mỗi vật tương tác mới nên giới thiệu ở màn riêng trước khi trộn với vật khác (xem bản nháp 10 màn trong cuộc trò chuyện).
+- `BalloonInput` bỏ qua chạm bắt đầu trên phần tử UI có Raycast Target. Ảnh trang trí trên HUD nên tắt `Raycast Target`.
+- Rung Android cần quyền VIBRATE: `Haptics` giữ một tham chiếu `Handheld.Vibrate` để Unity tự thêm quyền. Rung iOS dùng `Plugins/iOS/PopJetHaptics.mm` (builder đặt plugin chỉ cho iOS).
+- Mỗi vật tương tác mới nên giới thiệu ở màn riêng trước khi trộn với vật khác (GDD §8.2).

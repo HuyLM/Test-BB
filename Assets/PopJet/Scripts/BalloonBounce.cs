@@ -38,6 +38,9 @@ namespace PopJet
         [Tooltip("Thời gian tối thiểu giữa 2 tiếng nảy, tránh spam khi lăn dọc tường.")]
         [SerializeField] float soundCooldown = 0.08f;
 
+        /// <summary>Mỗi lần va đủ mạnh để bóp dẹt, kèm độ mạnh 0..1 (cho rung máy, biểu cảm mặt bóng).</summary>
+        public event System.Action<float> Bounced;
+
         float squash;      // < 0 = dẹt theo axis
         float velocity;
         Vector2 axis = Vector2.right;
@@ -61,6 +64,7 @@ namespace PopJet
             velocity = 0f;
 
             PlayBounce(k);
+            Bounced?.Invoke(k);
         }
 
         void LateUpdate()

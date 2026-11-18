@@ -13,7 +13,7 @@ namespace PopJet.EditorTools
     /// Tự sinh sprite, particle và âm thanh placeholder để chạy được ngay.
     /// Menu: Tools > PopJet > Build Sample Scene
     /// </summary>
-    public static class PopJetSceneBuilder
+    public static partial class PopJetSceneBuilder
     {
         const string Root = "Assets/PopJet";
         const string ArtDir = Root + "/Art";
@@ -231,6 +231,7 @@ namespace PopJet.EditorTools
 
             var vcamBuilt = BuildCinemachine(cam, balloonGo.transform);
             SetupPop(balloonGo, vcamBuilt);
+            SetupPhase1(balloon, input, lm, vcamBuilt); // GDD Giai đoạn 1 (PopJetPhase1Builder.cs)
 
             EditorSceneManager.SaveScene(scene, ScenePath);
             AddToBuildSettings(ScenePath);
