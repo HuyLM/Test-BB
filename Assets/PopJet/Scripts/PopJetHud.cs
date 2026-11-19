@@ -13,6 +13,8 @@ namespace PopJet
     {
         [SerializeField] BalloonController balloon;
         [SerializeField] LevelManager level;
+        [Tooltip("Để trống thì số cú chọc hiện không kèm Par và không báo sao.")]
+        [SerializeField] LevelSession session;
         [SerializeField] Button retryButton;
         [SerializeField] Text retryLabel;
         [SerializeField] Text pokeLabel;
@@ -26,6 +28,7 @@ namespace PopJet
         Camera cam;
         RectTransform failRect, retryRect;
         float failShownAt = -1f;
+        float messageSeconds;
         bool stuck;
 
         void Awake()
@@ -58,6 +61,11 @@ namespace PopJet
                 balloon.BecameEmpty += OnEmpty;
             }
             if (level != null) level.StuckChanged += OnStuck;
+            if (session != null)
+            {
+                session.StarCollected += OnStar;
+                session.Completed += OnCompleted;
+            }
         }
 
         void OnDisable()
@@ -68,6 +76,16 @@ namespace PopJet
                 balloon.BecameEmpty -= OnEmpty;
             }
             if (level != null) level.StuckChanged -= OnStuck;
+            if (session != null)
+            {
+                session.StarCollected -= OnStar;
+                session.Completed -= OnCompleted;
+            }
+        }
+
+        void Start()
+        {
+            SetPokes(0); // Par của màn chỉ có sau khi LevelLoader chạy
         }
 
         void OnRetry()
@@ -77,8 +95,15 @@ namespace PopJet
 
         void SetPokes(int count)
         {
-            if (pokeLabel != null) pokeLabel.text = GameText.Pokes(count);
+            if (pokeLabel == null) return;
+            pokeLabel.text = session != null ? GameText.Pokes(count, session.Par) : GameText.Pokes(count);
+            // Vượt Par thì chữ chuyển cam: sao Par của lượt này đã mất.
+            pokeLabel.color = session != null && count > session.Par ? new Color(1f, 0.541f, 0f) : Color.white;
         }
+
+        void OnStar() { ShowMessage(GameText.StarCollected, 0.8f); }
+
+        void OnCompleted(LevelResult r) { ShowMessage(GameText.Result(r.Stars, r.crown), 1.2f); }
 
         void OnStuck(bool value)
         {
@@ -90,10 +115,17 @@ namespace PopJet
         void OnEmpty()
         {
             OnStuck(false);
+            ShowMessage(GameText.Fail(balloon.LastFailReason), failLabelSeconds);
+        }
+
+        /// <summary>Hiện chữ ngắn (lý do thua, nhặt Sao, số sao) ngay phía trên bóng, bật lên rồi tự ẩn.</summary>
+        void ShowMessage(string text, float seconds)
+        {
             if (failLabel == null) return;
-            failLabel.text = GameText.Fail(balloon.LastFailReason);
+            failLabel.text = text;
             failLabel.gameObject.SetActive(true);
             failShownAt = Time.unscaledTime;
+            messageSeconds = seconds;
             PlaceFailLabel();
         }
 
@@ -122,7 +154,7 @@ namespace PopJet
                 float s = t < 0.12f ? Mathf.Lerp(0.3f, 1.15f, t / 0.12f)
                         : t < 0.25f ? Mathf.Lerp(1.15f, 1f, (t - 0.12f) / 0.13f) : 1f;
                 failRect.localScale = Vector3.one * s;
-                if (t > failLabelSeconds)
+                if (t > messageSeconds)
                 {
                     failLabel.gameObject.SetActive(false);
                     failShownAt = -1f;

@@ -76,18 +76,9 @@ namespace PopJet.EditorTools
                 cam.backgroundColor = new Color(0.16f, 0.2f, 0.28f);
             }
 
-            var level = new GameObject("Level").transform;
+            // Nội dung màn (tường, gai, quạt...) nằm trong prefab màn, xem PopJetLevelBuilder.cs.
 
-            // ---- Tường bao (màn dọc 9:16, size 5 => rộng ~5.6) ----
-            var wallColor = new Color(0.45f, 0.48f, 0.55f);
-            Wall("Wall_Left", new Vector2(-2.95f, 0f), new Vector2(0.3f, 10.6f), wallColor, level);
-            Wall("Wall_Right", new Vector2(2.95f, 0f), new Vector2(0.3f, 10.6f), wallColor, level);
-            Wall("Wall_Bottom", new Vector2(0f, -5.15f), new Vector2(6.2f, 0.3f), wallColor, level);
-            Wall("Wall_Top", new Vector2(0f, 5.15f), new Vector2(6.2f, 0.3f), wallColor, level);
-            // Buồng đích phía trên bên phải: vách đứng + cửa làm sàn.
-            Wall("Wall_GoalDivider", new Vector2(1.0f, 3.35f), new Vector2(0.25f, 3.4f), wallColor, level);
-
-            // ---- Bóng ----
+            // ---- Bóng (LevelLoader đặt vào điểm xuất phát của màn khi Play) ----
             var balloonGo = new GameObject("Balloon");
             balloonGo.transform.position = new Vector3(0f, -3.6f, 0f);
             balloonGo.transform.localScale = Vector3.one * 0.9f;
@@ -142,87 +133,6 @@ namespace PopJet.EditorTools
             var input = inputGo.AddComponent<BalloonInput>();
             SetRefs(input, ("balloon", balloon), ("needle", needle.transform), ("flightArrow", lr));
 
-            // ---- Gai (collider thường = chặn bóng) ----
-            var spike = new GameObject("SpikeStrip");
-            spike.transform.SetParent(level);
-            spike.transform.position = new Vector3(0.4f, 0.2f, 0f);
-            var spikeCol = spike.AddComponent<BoxCollider2D>();
-            spikeCol.size = new Vector2(1.6f, 0.4f);
-            spike.AddComponent<Spike>();
-            for (int i = 0; i < 4; i++)
-            {
-                var t = new GameObject("Tooth_" + i);
-                t.transform.SetParent(spike.transform, false);
-                t.transform.localPosition = new Vector3(-0.6f + i * 0.4f, 0f, 0f);
-                t.transform.localScale = new Vector3(0.4f, 0.4f, 1f);
-                AddSprite(t, triangle, new Color(0.7f, 0.72f, 0.78f), 5);
-                // Răng dưới chĩa xuống
-                var b = new GameObject("ToothDown_" + i);
-                b.transform.SetParent(spike.transform, false);
-                b.transform.localPosition = new Vector3(-0.6f + i * 0.4f, 0f, 0f);
-                b.transform.localRotation = Quaternion.Euler(0, 0, 180);
-                b.transform.localScale = new Vector3(0.4f, 0.4f, 1f);
-                AddSprite(b, triangle, new Color(0.7f, 0.72f, 0.78f), 5);
-            }
-
-            // ---- Keo vá ----
-            var patch = new GameObject("Patch");
-            patch.transform.SetParent(level);
-            patch.transform.position = new Vector3(2.1f, -1.2f, 0f);
-            patch.transform.localScale = Vector3.one * 0.5f;
-            AddSprite(patch, circle, new Color(1f, 0.85f, 0.25f), 4);
-            patch.AddComponent<CircleCollider2D>().isTrigger = true;
-            var patchComp = patch.AddComponent<PatchPickup>();
-            SetFloat(patchComp, "airRefill", 0.3f); // gấp 3 mức cũ (10% -> 30%)
-
-            // ---- Quạt: +X local là hướng gió, xoay 90 độ để thổi lên ----
-            var fan = new GameObject("Fan");
-            fan.transform.SetParent(level);
-            fan.transform.position = new Vector3(-1.75f, -0.4f, 0f);
-            fan.transform.rotation = Quaternion.Euler(0f, 0f, 90f);
-            var fanCol = fan.AddComponent<BoxCollider2D>();
-            fanCol.size = new Vector2(3.4f, 1.6f);
-            fanCol.isTrigger = true;
-            fan.AddComponent<Fan>();
-            var wind = new GameObject("WindZone");
-            wind.transform.SetParent(fan.transform, false);
-            wind.transform.localScale = new Vector3(3.4f, 1.6f, 1f);
-            AddSprite(wind, square, new Color(0.5f, 0.85f, 1f, 0.15f), 1);
-            var fanBody = new GameObject("FanBody");
-            fanBody.transform.SetParent(fan.transform, false);
-            fanBody.transform.localPosition = new Vector3(-1.7f, 0f, 0f);
-            fanBody.transform.localScale = new Vector3(0.25f, 1.6f, 1f);
-            AddSprite(fanBody, square, new Color(0.3f, 0.65f, 0.85f), 3);
-
-            // ---- Cửa (sàn buồng đích) ----
-            var door = new GameObject("Door");
-            door.transform.SetParent(level);
-            door.transform.position = new Vector3(1.95f, 1.65f, 0f);
-            door.transform.localScale = new Vector3(1.75f, 0.25f, 1f);
-            AddSprite(door, square, new Color(0.6f, 0.4f, 0.25f), 2);
-            door.AddComponent<BoxCollider2D>();
-            var doorComp = door.AddComponent<Door>();
-            SetValue(doorComp, "openOffset", new Vector2(1.9f, 0f));
-
-            // ---- Nút ----
-            var button = new GameObject("Button");
-            button.transform.SetParent(level);
-            button.transform.position = new Vector3(-2.65f, 3.6f, 0f);
-            button.transform.localScale = new Vector3(0.25f, 0.9f, 1f);
-            AddSprite(button, square, new Color(0.9f, 0.25f, 0.45f), 2);
-            button.AddComponent<BoxCollider2D>().isTrigger = true;
-            var sw = button.AddComponent<ButtonSwitch>();
-            SetArray(sw, "doors", new Object[] { doorComp });
-
-            // ---- Đích ----
-            var goal = new GameObject("Goal");
-            goal.transform.SetParent(level);
-            goal.transform.position = new Vector3(1.95f, 3.7f, 0f);
-            goal.transform.localScale = Vector3.one * 1.1f;
-            AddSprite(goal, circle, new Color(0.3f, 0.85f, 0.45f, 0.6f), 1);
-            goal.AddComponent<CircleCollider2D>().isTrigger = true;
-            goal.AddComponent<GoalZone>();
-
             // ---- LevelManager + Debug ----
             var lm = new GameObject("LevelManager").AddComponent<LevelManager>();
             SetRefs(lm, ("balloon", balloon));
@@ -232,6 +142,7 @@ namespace PopJet.EditorTools
             var vcamBuilt = BuildCinemachine(cam, balloonGo.transform);
             SetupPop(balloonGo, vcamBuilt);
             SetupPhase1(balloon, input, lm, vcamBuilt); // GDD Giai đoạn 1 (PopJetPhase1Builder.cs)
+            SetupLevels(balloon, lm, vcamBuilt);         // GDD phần 2.1: prefab màn + catalog (PopJetLevelBuilder.cs)
 
             EditorSceneManager.SaveScene(scene, ScenePath);
             AddToBuildSettings(ScenePath);

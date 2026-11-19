@@ -10,7 +10,14 @@ namespace PopJet
         public const string Stuck = "Stuck?";
         public const string Air = "Air";
 
+        public const string StarCollected = "Star!";
+
         public static string Pokes(int count) => "Pokes " + count;
+        public static string Pokes(int count, int par) => $"Pokes {count} / Par {par}";
+
+        /// <summary>Báo khi về đích. Font tạm chưa có ký tự ★ nên viết bằng chữ.</summary>
+        public static string Result(int stars, bool crown) =>
+            (stars == 1 ? "1 Star" : stars + " Stars") + (crown ? " + Crown!" : "!");
 
         public static string Fail(FailReason reason)
         {

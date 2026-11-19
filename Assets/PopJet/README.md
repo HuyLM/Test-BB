@@ -36,6 +36,24 @@ Copy cả thư mục `PopJet` vào `Assets/` của project. Không cần package
 | `PopJetHud` + `AirBarUI` + `SafeAreaFitter` | `HUD` | Nút Retry, số cú chọc, thanh khí chia ô, lý do thua, "Stuck?" |
 | `GameText` | (static) | Mọi chữ trong game (tiếng Anh) gom một chỗ |
 | `Plugins/iOS/PopJetHaptics.mm` | (plugin) | Rung trên iOS, chỉ build cho iOS |
+| **Giai đoạn 2** | | |
+| `LevelDefinition` | Asset (`Levels/Level_*.asset`) | Một màn: mã, tên, thế giới, prefab, Par, ghi chú lời giải |
+| `LevelCatalog` | Asset (`Levels/LevelCatalog.asset`) | Danh sách màn theo thứ tự chơi |
+| `LevelRoot` | Gốc prefab màn | Điểm xuất phát của bóng (`Spawn`) |
+| `LevelLoader` | Object rỗng `LevelLoader` | Tạo prefab màn hiện tại khi scene load, đặt bóng và camera vào điểm xuất phát, `LoadLevel`/`LoadNext` |
+| `LevelSession` | Object rỗng `LevelSession` | Một lượt chơi: cú chọc so với Par, nhặt Sao, tính 3 sao + Vương miện khi về đích, gộp thành tích theo màn |
+| `StarPickup` | Sao trong prefab màn | Bóng chạm là nhặt (trigger), báo `LevelSession` |
+| `SaveSystem` | (static, tự chạy) | Lưu JSON: thành tích từng màn, màn gần nhất, xu, cài đặt; tự lưu khi qua màn, đổi màn, app xuống nền |
+
+## 2b. Màn chơi (Giai đoạn 2, phần 2.1)
+
+- **Một scene gameplay** (`PopJet_Sample.unity`) chứa bóng, input, camera, HUD, nhạc, LevelManager và `LevelLoader`. **Nội dung màn** (tường, gai, quạt, keo, cửa, đích) là prefab trong `Levels/Prefabs/`, gốc có `LevelRoot` và object con `Spawn`.
+- Chơi lại và sang màn mới đều load lại scene gameplay; chỉ số màn giữ trong biến static của `LevelLoader`. Cách này reset sạch bóng, HUD, vật cản (khác GDD §15.7 định tạo lại prefab; đổi sau nếu load scene chậm trên máy thật).
+- Về đích thì tự sang màn kế sau `Win Delay` (màn hình Kết quả làm ở phần 2.5). Màn cuối thì đứng yên.
+- **Thêm màn mới:** dựng prefab có `LevelRoot` + `Spawn` (đừng đặt bóng trong prefab), tạo `Assets > Create > PopJet > Level Definition`, gán prefab và Par, kéo vào `LevelCatalog`. Test một màn: đặt `Start Level Override` trên `LevelLoader` thành chỉ số của màn đó.
+- **3 sao (phần 2.2, GDD §3.4):** ★ Về đích, ★ Nhặt Sao, ★ Số cú chọc ≤ Par. Màn không đặt `StarPickup` thì sao thứ hai tự đạt. Đủ 3 sao trong **cùng một lượt** thì có Vương miện. Thành tích gộp từng sao qua các lượt (`LevelSession.GetRecord(id)`), hiện chỉ giữ trong bộ nhớ, phần 2.3 sẽ lưu ra file. HUD hiện "Pokes 1 / Par 4" (vượt Par thì chuyển cam), "Star!" khi nhặt Sao và số sao khi về đích. Mỗi màn nên có đúng 1 Sao, đặt lệch khỏi đường ngắn nhất.
+- **Lưu game (phần 2.3):** file `popjet_save.json` trong `Application.persistentDataPath` (menu `Tools > PopJet > Show Save File` mở thư mục, `Delete Save File` xóa để chơi lại từ đầu). Lưu: thành tích từng màn (từng sao, Vương miện, ít cú chọc nhất), màn chơi gần nhất (mở game là chơi tiếp màn đó), xu, cài đặt (rung, âm lượng nhạc/hiệu ứng, giảm chuyển động). Ghi qua file tạm rồi mới thay file chính, bản trước giữ ở `.bak`; file hỏng thì đọc `.bak`, hỏng nốt thì bắt đầu lại trống. Màn sau mở khi màn trước đã về đích (`LevelCatalog.IsUnlocked`); bản đồ ở phần 2.5 sẽ dùng. Cần lưu thêm gì thì thêm vào `SaveData`, đừng dùng PlayerPrefs riêng.
+- Hiện có 2 màn thử: `1-1` (đích ngay phía trên, Par 1) và `1-2` (bố cục scene mẫu cũ, Par 4 tạm). 20 màn thật làm ở phần 2.7. Builder **ghi đè** hai prefab màn này mỗi lần chạy; màn dựng tay nên đặt tên khác.
 
 ## 3. Dựng scene mẫu
 
@@ -53,7 +71,7 @@ Unity.exe -batchmode -quit -projectPath "E:/Unity/my/Test-BB" -executeMethod Pop
 | `Tools > PopJet > Add Balloon Pop To Open Scene` | Chỉ thêm hiệu ứng vỡ bóng vào scene đang mở |
 | `Tools > PopJet > Apply Mobile Player Settings` | Player Settings: Default Orientation = Portrait, tắt xoay ngang |
 
-**Lưu ý khi chạy lại builder:** nó ghi đè `PopJet_Sample.unity`, các prefab trong `Prefabs/` và cài đặt import của sprite sinh tự động (`Circle`, `Square`, `Triangle`, `SoftDot`, `Ring`, `Smile`, `RoundRect`). Art thật (kể cả art AI theo GDD §9.6) đặt tên khác, trong thư mục con như `Art/World1/`.
+**Lưu ý khi chạy lại builder:** nó ghi đè `PopJet_Sample.unity`, các prefab trong `Prefabs/` và cài đặt import của sprite sinh tự động (`Circle`, `Square`, `Triangle`, `SoftDot`, `Ring`, `Smile`, `RoundRect`, `Star`). Art thật (kể cả art AI theo GDD §9.6) đặt tên khác, trong thư mục con như `Art/World1/`.
 
 **Camera (Cinemachine 3, không tự code follow):** Main Camera Orthographic + `CinemachineBrain`, màn dọc 9:16. Object `CM FollowCam` có `CinemachineCamera` (Follow = `Balloon`, Ortho Size 3.5 ở tỉ lệ 9:16) + `CinemachinePositionComposer` (Damping 0.4, Dead Zone 10%, Lookahead 0.25 giây) + `CameraAspectFit`. **Không** dùng `CinemachineConfiner2D`: chặn camera ở mép màn thì bóng sát góc sẽ nằm sát mép màn hình, không còn chỗ kéo kim. Bật `Interpolate` cho `Rigidbody2D` của bóng để camera không giật.
 
@@ -130,7 +148,7 @@ Tất cả đều là starting value, không có nguồn chuẩn.
 | Kẹt | Còn < 1 cú chọc, để bóng nằm yên ở góc | Sau 3 giây: "Stuck?" và nút Retry nhấp nháy |
 | Màn hình | Game view 9:16, 9:20 và 3:4 | Chiều ngang thấy như nhau ở 9:16 và 9:20; HUD nằm trong safe area |
 
-**Test tự động:** `Tests/PlayMode/PopJetSmokeTest.cs` chạy scene mẫu và kích hoạt ngắm, chọc, rò, vá, nổ, tự chơi lại. Chạy trong `Window > General > Test Runner > PlayMode`, hoặc headless (Editor phải đóng):
+**Test tự động:** `Tests/PlayMode/PopJetSmokeTest.cs` chạy scene gameplay và kích hoạt ngắm, chọc, rò, vá, nổ, tự chơi lại; test thứ hai kiểm tra LevelLoader (thắng 1-1 thì sang 1-2, màn cuối thì đứng yên); test thứ ba kiểm tra nhặt Sao, Par, 3 sao và Vương miện; hai test lưu game kiểm tra ghi/đọc lại, gộp sao, khôi phục khi file hỏng, chơi tiếp màn gần nhất và mở khóa màn. Mọi test dùng file save tạm riêng, không đụng save thật. Chạy trong `Window > General > Test Runner > PlayMode`, hoặc headless (Editor phải đóng):
 
 ```
 Unity.exe -batchmode -projectPath "E:/Unity/my/Test-BB" -runTests -testPlatform PlayMode -testResults results.xml -logFile -

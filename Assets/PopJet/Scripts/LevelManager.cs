@@ -18,7 +18,7 @@ namespace PopJet
         [SerializeField] float failRestartDelay = 1.2f;
         [Tooltip("Sau khi thua, chạm bất kỳ đâu để chơi lại ngay. Chờ ít nhất từng này giây để tránh chạm nhầm.")]
         [SerializeField] float tapToRetryAfter = 0.25f;
-        [Tooltip("Tên scene màn kế tiếp (phải có trong Build Settings). Để trống nếu dùng UI để chuyển.")]
+        [Tooltip("Chỉ dùng khi scene KHÔNG có LevelLoader: tên scene màn kế tiếp (phải có trong Build Settings).")]
         [SerializeField] string nextSceneName;
         [SerializeField] bool autoLoadNextOnWin = false;
         [SerializeField] float winDelay = 1.2f;
@@ -111,7 +111,9 @@ namespace PopJet
             timerRunning = false;
             SetStuck(false);
             onWin?.Invoke();
-            if (autoLoadNextOnWin && !string.IsNullOrEmpty(nextSceneName))
+            var loader = LevelLoader.Current;
+            bool hasNext = loader != null ? loader.HasNext : !string.IsNullOrEmpty(nextSceneName);
+            if (autoLoadNextOnWin && hasNext)
                 Invoke(nameof(LoadNext), winDelay);
         }
 
@@ -137,9 +139,19 @@ namespace PopJet
 #endif
         }
 
+        /// <summary>Sang màn kế: theo LevelCatalog nếu scene có LevelLoader, nếu không thì theo Next Scene Name.</summary>
         public void LoadNext()
         {
-            if (string.IsNullOrEmpty(nextSceneName) || restarting) return;
+            if (restarting) return;
+            var loader = LevelLoader.Current;
+            if (loader != null)
+            {
+                if (!loader.HasNext) return;
+                restarting = true;
+                loader.LoadNext();
+                return;
+            }
+            if (string.IsNullOrEmpty(nextSceneName)) return;
             restarting = true;
             Time.timeScale = 1f;
             SceneManager.LoadScene(nextSceneName);

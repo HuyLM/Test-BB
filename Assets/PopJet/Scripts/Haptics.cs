@@ -10,24 +10,17 @@ namespace PopJet
     /// - Android gọi thẳng Vibrator / VibrationEffect (API 26+ có chỉnh cường độ).
     /// - iOS gọi plugin Plugins/iOS/PopJetHaptics.mm (UIImpactFeedbackGenerator).
     /// - Editor và PC: không làm gì.
-    /// Bật/tắt lưu ở PlayerPrefs ("popjet.haptics"). Thời lượng và cường độ là starting value.
+    /// Bật/tắt lưu trong file save (SaveSystem, settings.haptics). Thời lượng và cường độ là starting value.
     /// </summary>
     public static class Haptics
     {
-        const string PrefKey = "popjet.haptics";
-        static int enabledCache = -1;
-
         public static bool Enabled
         {
-            get
-            {
-                if (enabledCache < 0) enabledCache = PlayerPrefs.GetInt(PrefKey, 1);
-                return enabledCache == 1;
-            }
+            get => SaveSystem.Data.settings.haptics;
             set
             {
-                enabledCache = value ? 1 : 0;
-                PlayerPrefs.SetInt(PrefKey, enabledCache);
+                SaveSystem.Data.settings.haptics = value;
+                SaveSystem.MarkDirty();
             }
         }
 
