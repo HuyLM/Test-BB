@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f6f51e4d01e39a438bc52374c3a81de, type: 3}
+  m_Name: Level_1-10
+  m_EditorClassIdentifier: Assembly-CSharp::PopJet.LevelDefinition
+  id: 1-10
+  title: Coin Shower
+  world: 1
+  prefab: {fileID: 3065083937876410826, guid: b84d8e4b1d4f74349a1d60b6c003e6bb, type: 3}
+  par: 2
+  hint: 
+  notes: "M\xE0n ngh\u1EC9: r\u1ED9ng, nhi\u1EC1u xu, \u0111\xEDch to. Par t\u1EA1m."

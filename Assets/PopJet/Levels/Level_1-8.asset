@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f6f51e4d01e39a438bc52374c3a81de, type: 3}
+  m_Name: Level_1-8
+  m_EditorClassIdentifier: Assembly-CSharp::PopJet.LevelDefinition
+  id: 1-8
+  title: Lights Out
+  world: 1
+  prefab: {fileID: 8966422078109378544, guid: 51b82cc68684dad4ea12da18d2183737, type: 3}
+  par: 4
+  hint: 
+  notes: "C\xF4ng t\u1EAFc v\xE0 c\u1EEDa (b\u1ED1 c\u1EE5c scene m\u1EABu c\u0169):
+    b\u1EA5m n\xFAt tr\xEAn t\u01B0\u1EDDng tr\xE1i \u0111\u1EC3 m\u1EDF s\xE0n bu\u1ED3ng
+    \u0111\xEDch. Par 4 t\u1EA1m."

@@ -13,10 +13,11 @@ MonoBehaviour:
   m_Name: Level_1-2
   m_EditorClassIdentifier: Assembly-CSharp::PopJet.LevelDefinition
   id: 1-2
-  title: Test Room
+  title: Other Way
   world: 1
   prefab: {fileID: 1040542436610342909, guid: f8f7d5bfd07b35a4da5d919c2186951e, type: 3}
-  par: 4
-  notes: "M\xE0n th\u1EED t\u1EEB scene m\u1EABu c\u0169: gai, keo, qu\u1EA1t, n\xFAt
-    + c\u1EEDa, Sao \u1EDF g\xF3c tr\xE1i tr\xEAn. Par 4 l\xE0 t\u1EA1m, ch\u01B0a
-    c\xF3 l\u1EDDi gi\u1EA3i ghi l\u1EA1i."
+  par: 2
+  hint: You fly away from the needle
+  notes: "Gi\u1EDBi thi\u1EC7u: \u0111\xEDch ch\xE9o l\xEAn b\xEAn ph\u1EA3i. L\u1EDDi
+    gi\u1EA3i: 2 c\xFA ch\u1ECDc ch\xE9o (kim ch\u0129a xu\u1ED1ng tr\xE1i). Par
+    t\u1EA1m."

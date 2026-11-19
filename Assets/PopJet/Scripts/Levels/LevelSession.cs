@@ -15,6 +15,8 @@ namespace PopJet
         public bool star;       // ★ Nhặt Sao (màn không có Sao thì tự đạt)
         public bool underPar;   // ★ Số cú chọc ≤ Par
         public bool crown;      // Đủ 3 sao trong cùng một lượt
+        public int coinsEarned; // Xu cộng vào ví ở lượt này
+        public bool firstClear; // Lần đầu về đích màn này
 
         public int Stars => (goal ? 1 : 0) + (star ? 1 : 0) + (underPar ? 1 : 0);
     }
@@ -25,6 +27,8 @@ namespace PopJet
     {
         public bool goal, star, underPar, crown;
         public int bestPokes = int.MaxValue;
+        /// <summary>Mã các xu đã nhặt (chỉ lần nhặt đầu được tính tiền).</summary>
+        public List<int> coins = new List<int>();
 
         public int Stars => (goal ? 1 : 0) + (star ? 1 : 0) + (underPar ? 1 : 0);
 
@@ -49,6 +53,8 @@ namespace PopJet
         [SerializeField] LevelLoader loader;
         [Tooltip("Par khi scene không có LevelLoader.")]
         [SerializeField, Min(1)] int fallbackPar = 3;
+        [Tooltip("Chơi lại màn đã qua thì chỉ được từng này xu, cộng xu mới chưa nhặt lần nào (GDD §12.2, §17).")]
+        [SerializeField, Min(0)] int replayCoins = 5;
 
         public static LevelSession Current { get; private set; }
 
@@ -56,9 +62,12 @@ namespace PopJet
         public event Action StarCollected;
         /// <summary>Về đích, kèm kết quả lượt này (đã gộp vào thành tích).</summary>
         public event Action<LevelResult> Completed;
+        /// <summary>Vừa nhặt một xu. Tham số: số xu đã nhặt trong lượt này.</summary>
+        public event Action<int> CoinCollected;
 
         bool starCollected;
         bool completed;
+        readonly List<int> runCoins = new List<int>();
 
         public string LevelId => loader != null && loader.Level != null ? loader.Level.Id : SceneManager.GetActiveScene().name;
         public int Par => loader != null && loader.Level != null ? loader.Level.Par : fallbackPar;
@@ -66,6 +75,7 @@ namespace PopJet
         public bool StarCollectedThisRun => starCollected;
         /// <summary>false = màn không đặt Sao nào, mục tiêu Sao tự đạt.</summary>
         public bool LevelHasStar { get; private set; }
+        public int CoinsThisRun => runCoins.Count;
         public LevelResult LastResult { get; private set; }
         public bool HasResult => completed;
 
@@ -114,10 +124,29 @@ namespace PopJet
             StarCollected?.Invoke();
         }
 
+        /// <summary>true = xu này đã được nhặt ở một lượt trước (đã tính tiền rồi).</summary>
+        public bool CoinAlreadyOwned(int coinId)
+        {
+            var rec = SaveSystem.GetRecord(LevelId);
+            return rec != null && rec.coins.Contains(coinId);
+        }
+
+        /// <summary>CoinPickup gọi khi bóng chạm xu.</summary>
+        public void CollectCoin(int coinId)
+        {
+            if (completed || runCoins.Contains(coinId)) return;
+            runCoins.Add(coinId);
+            CoinCollected?.Invoke(runCoins.Count);
+        }
+
         void OnGoal()
         {
             if (completed) return;
             completed = true;
+            var prev = SaveSystem.GetRecord(LevelId);
+            bool replay = prev != null && prev.goal;
+            int fresh = 0;
+            foreach (int id in runCoins) if (prev == null || !prev.coins.Contains(id)) fresh++;
             var r = new LevelResult
             {
                 levelId = LevelId,
@@ -125,11 +154,13 @@ namespace PopJet
                 par = Par,
                 goal = true,
                 star = starCollected || !LevelHasStar,
-                underPar = Pokes <= Par
+                underPar = Pokes <= Par,
+                firstClear = !replay,
+                coinsEarned = fresh + (replay ? replayCoins : 0)
             };
             r.crown = r.Stars == 3; // chưa có booster; phần sau: dùng booster thì không được Vương miện
             LastResult = r;
-            SaveSystem.MergeResult(r); // gộp từng sao và ghi file ngay
+            SaveSystem.MergeResultWithCoins(r, runCoins); // gộp từng sao, cộng xu và ghi file ngay
             Completed?.Invoke(r);
         }
     }

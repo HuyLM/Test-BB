@@ -1072,10 +1072,10 @@ Cỡ việc là ước lượng thô, giả định 1–2 người làm (§20): 
 | 2.1 Dữ liệu màn | `LevelDefinition`, `LevelCatalog`, prefab màn, `LevelLoader`, một scene gameplay | Xong (2026-11-19). Chơi lại bằng load lại scene thay vì tạo lại prefab |
 | 2.2 Sao và Par | `LevelSession`, 3 sao, Vương miện, `StarPickup` | Xong (2026-11-19). Thành tích chỉ trong bộ nhớ tới phần 2.3 |
 | 2.3 Lưu game | `SaveSystem` JSON | Xong (2026-11-19): thành tích, màn gần nhất, xu, cài đặt, file .bak, mở khóa màn |
-| 2.4 HUD đầy đủ + TextMeshPro | Pause, ô mục tiêu, Xem màn, camera giới thiệu, `TimeController` | Chưa |
-| 2.5 Các màn hình | Kết quả, Trang chủ, Bản đồ, Cài đặt | Chưa |
-| 2.6 Vật mới Thế giới 1 | Xu, gai di chuyển, pháo giấy, gối bông, nến, mèo, máy hút bụi | Chưa |
-| 2.7 Dựng 20 màn | Tutorial §8.4, Par và lời giải từng màn | Chưa |
+| 2.4 HUD đầy đủ + TextMeshPro | Pause, ô mục tiêu, Xem màn, camera giới thiệu, `TimeController` | Xong (2026-11-19). UI dựng bằng code lúc chạy (`GameScreens`, `UiKit`). Font tạm LiberationSans (chưa có Baloo 2/Nunito) |
+| 2.5 Các màn hình | Kết quả, Trang chủ, Bản đồ, Cài đặt | Xong (2026-11-19). Chưa có: ×2 xu bằng quảng cáo, Tủ đồ, Thử thách ngày, chuyển màn bằng bóng nổ, sân chơi Pốp ở Trang chủ |
+| 2.6 Vật mới Thế giới 1 | Xu, gai di chuyển, pháo giấy, gối bông, nến, mèo, máy hút bụi | Xong (2026-11-19). Hình vẫn là placeholder |
+| 2.7 Dựng 20 màn | Tutorial §8.4, Par và lời giải từng màn | Bản nháp (2026-11-19): 20 màn dựng bằng builder, Par và bố cục **chưa playtest**; màn trùm chưa có checkpoint, chưa có bản ghi lời giải cho Gợi ý |
 | 2.8 Analytics + kiểm tra cuối | Sự kiện, build Android, chơi thử máy thật | Chưa |
 
 ### 16.2 Nếu thiếu thời gian, cắt theo thứ tự này

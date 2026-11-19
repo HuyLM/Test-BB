@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f6f51e4d01e39a438bc52374c3a81de, type: 3}
+  m_Name: Level_1-16
+  m_EditorClassIdentifier: Assembly-CSharp::PopJet.LevelDefinition
+  id: 1-16
+  title: Fire Line
+  world: 1
+  prefab: {fileID: 1203020333562764202, guid: a4cffc42f6cba064a8528a9676274bce, type: 3}
+  par: 2
+  hint: 
+  notes: "Ph\xE1o gi\u1EA5y + n\u1EBFn: b\u1EAFn qua khe gi\u1EEFa c\xE1c ng\u1ECDn
+    n\u1EBFn. Par t\u1EA1m."

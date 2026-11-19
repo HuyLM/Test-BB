@@ -24,6 +24,22 @@ public class PopJetSmokeTest
     static object Get(Component c, string prop) => c.GetType().GetProperty(prop, All).GetValue(c);
     static void SetField(Component c, string f, object v) => c.GetType().GetField(f, All).SetValue(c, v);
 
+    // Nhãn HUD là TextMeshPro: asmdef không tham chiếu TMP nên đọc thuộc tính text/color bằng reflection.
+    static Component Tmp(string path)
+    {
+        var go = GameObject.Find(path);
+        Assert.IsNotNull(go, "Không thấy " + path);
+        foreach (var c in go.GetComponents<Component>())
+            if (c.GetType().Name == "TextMeshProUGUI") return c;
+        Assert.Fail("Không có TextMeshProUGUI trên " + path);
+        return null;
+    }
+    static string LabelText(string path) => (string)Get(Tmp(path), "text");
+    static Color LabelColor(string path) => (Color)Get(Tmp(path), "color");
+
+    static System.Type RuntimeType(string name) => System.Type.GetType("PopJet." + name + ", Assembly-CSharp");
+    static Component Screens => Comp("HUD", "GameScreens");
+
     static readonly string SavePath = System.IO.Path.Combine(Application.temporaryCachePath, "popjet_test_save.json");
     static System.Type SaveType => System.Type.GetType("PopJet.SaveSystem, Assembly-CSharp");
     static object Save(string method, params object[] args) => SaveType.GetMethod(method).Invoke(null, args);
@@ -35,6 +51,15 @@ public class PopJetSmokeTest
         foreach (var f in new[] { SavePath, SavePath + ".bak", SavePath + ".tmp" })
             if (System.IO.File.Exists(f)) System.IO.File.Delete(f);
         Save("UseFile", SavePath);
+        // Tắt camera giới thiệu đầu màn: nó dừng thế giới nên WaitForSeconds sẽ không bao giờ xong.
+        RuntimeType("GameFlow").GetField("IntroEnabled").SetValue(null, false);
+    }
+
+    [TearDown]
+    public void RestoreFlow()
+    {
+        RuntimeType("GameFlow").GetField("IntroEnabled").SetValue(null, true);
+        RuntimeType("TimeController").GetMethod("ResetAll").Invoke(null, null);
     }
 
     static object NewResult(string id, bool star, bool underPar, bool crown)
@@ -163,7 +188,7 @@ public class PopJetSmokeTest
         yield return null;
         var fail = GameObject.Find("HUD/SafeArea/FailLabel");
         Assert.IsNotNull(fail, "Chữ lý do thua phải hiện");
-        Assert.AreEqual("Burned!", fail.GetComponent<UnityEngine.UI.Text>().text);
+        Assert.AreEqual("Burned!", LabelText("HUD/SafeArea/FailLabel"));
 
         yield return new WaitForSeconds(1.8f); // tự chơi lại sau 1.2 giây
         var balloon2 = Comp("Balloon", "BalloonController");
@@ -182,35 +207,34 @@ public class PopJetSmokeTest
         SceneManager.LoadScene(0);
         yield return null;
         yield return null;
-        Call(Comp("LevelLoader", "LevelLoader"), "LoadLevel", 1); // 1-2 có Sao, Par 4
+        Call(Comp("LevelLoader", "LevelLoader"), "LoadLevel", 7); // 1-8 có Sao, Par 4
         yield return null;
         yield return null;
 
         var session = Comp("LevelSession", "LevelSession");
         Assert.AreEqual(4, Get(session, "Par"));
         Assert.IsTrue((bool)Get(session, "LevelHasStar"));
-        var pokeLabel = GameObject.Find("HUD/SafeArea/PokeLabel").GetComponent<UnityEngine.UI.Text>();
-        Assert.AreEqual("Pokes 0 / Par 4", pokeLabel.text);
+        Assert.AreEqual("Pokes 0 / Par 4", LabelText("HUD/SafeArea/PokeLabel"));
 
         // Đưa bóng chạm Sao thật (trigger), không gọi thẳng CollectStar.
-        var star = GameObject.Find("Level_1-2/Star");
+        var star = GameObject.Find("Level_1-8/Star");
         var balloon = Comp("Balloon", "BalloonController");
         balloon.GetComponent<Rigidbody2D>().position = star.transform.position;
         yield return new WaitForFixedUpdate();
         yield return new WaitForFixedUpdate();
         yield return null;
         Assert.IsTrue((bool)Get(session, "StarCollectedThisRun"), "Chạm Sao phải nhặt được");
-        Assert.AreEqual("Star!", GameObject.Find("HUD/SafeArea/FailLabel").GetComponent<UnityEngine.UI.Text>().text);
+        Assert.AreEqual("Star!", LabelText("HUD/SafeArea/FailLabel"));
 
         Call(balloon, "TryVent", Vector2.left);
         yield return null;
-        Assert.AreEqual("Pokes 1 / Par 4", pokeLabel.text);
+        Assert.AreEqual("Pokes 1 / Par 4", LabelText("HUD/SafeArea/PokeLabel"));
         Call(balloon, "ReachGoal");
         yield return null;
         var r = Get(session, "LastResult");
         Assert.AreEqual(3, Prop(r, "Stars"), "Về đích + Sao + dưới Par");
         Assert.IsTrue((bool)Field(r, "crown"));
-        Assert.AreEqual("3 Stars + Crown!", GameObject.Find("HUD/SafeArea/FailLabel").GetComponent<UnityEngine.UI.Text>().text);
+        Assert.AreEqual("3 Stars + Crown!", LabelText("HUD/SafeArea/FailLabel"));
 
         // 1-1: Par 1, không có Sao (tự đạt). Chọc 2 lần => mất sao Par, không có Vương miện.
         Call(Comp("LevelLoader", "LevelLoader"), "LoadLevel", 0);
@@ -222,7 +246,7 @@ public class PopJetSmokeTest
         Call(balloon, "TryVent", Vector2.right);
         Call(balloon, "TryVent", Vector2.left);
         yield return null;
-        Assert.AreEqual(new Color(1f, 0.541f, 0f), GameObject.Find("HUD/SafeArea/PokeLabel").GetComponent<UnityEngine.UI.Text>().color, "Vượt Par thì chữ chuyển cam");
+        Assert.AreEqual(new Color(1f, 0.541f, 0f), LabelColor("HUD/SafeArea/PokeLabel"), "Vượt Par thì chữ chuyển cam");
         Call(balloon, "ReachGoal");
         yield return null;
         r = Get(session, "LastResult");
@@ -231,17 +255,16 @@ public class PopJetSmokeTest
 
         // Thành tích gộp theo màn: 1-2 vẫn giữ Vương miện.
         var sessionType = session.GetType();
-        var rec = sessionType.GetMethod("GetRecord").Invoke(null, new object[] { "1-2" });
+        var rec = sessionType.GetMethod("GetRecord").Invoke(null, new object[] { "1-8" });
         Assert.IsTrue((bool)Field(rec, "crown"));
 
-        yield return new WaitForSeconds(1.6f); // 1-1 thắng thì tự sang 1-2, để yên cho xong rồi trả về 1-1
         Call(Comp("LevelLoader", "LevelLoader"), "LoadLevel", 0);
         yield return null;
         yield return null;
     }
 
     [UnityTest]
-    public IEnumerator LevelLoader_LoadsNextLevelAndWinAdvances()
+    public IEnumerator LevelLoader_ResultScreenNextAdvances()
     {
         SceneManager.LoadScene(0);
         yield return null;
@@ -252,22 +275,186 @@ public class PopJetSmokeTest
         yield return null;
         yield return null;
         Assert.IsNotNull(GameObject.Find("Level_1-1"));
+        var catalog = Get(loader, "Catalog");
+        Assert.AreEqual(20, Prop(catalog, "Count"), "Thế giới 1 có 20 màn");
 
-        // Về đích ở 1-1 thì tự sang 1-2 sau winDelay.
-        var balloon = Comp("Balloon", "BalloonController");
-        Call(balloon, "ReachGoal");
-        yield return new WaitForSeconds(1.6f);
-        Assert.IsNotNull(GameObject.Find("Level_1-2"), "Thắng phải sang màn 1-2");
+        // Về đích: hiện màn Kết quả, không tự sang màn kế.
+        Call(Comp("Balloon", "BalloonController"), "ReachGoal");
+        yield return new WaitForSecondsRealtime(1.2f);
+        Assert.AreEqual("Result", Get(Screens, "CurrentScreen"), "Về đích phải hiện màn Kết quả");
+        Assert.IsNotNull(GameObject.Find("Level_1-1"), "Không tự sang màn kế");
+        Assert.AreEqual(1f, Time.timeScale, "Màn Kết quả không dừng thế giới");
+        Call(Screens, "Next");
+        yield return null;
+        yield return null;
+        Assert.IsNotNull(GameObject.Find("Level_1-2"), "Next phải sang màn 1-2");
         Assert.IsNull(GameObject.Find("Level_1-1"));
         var spawn = GameObject.Find("Level_1-2/Spawn");
         Assert.Less(Vector2.Distance(spawn.transform.position, Comp("Balloon", "BalloonController").transform.position), 0.01f);
 
-        // Màn cuối: thắng thì không đi đâu cả.
+        // Màn cuối: Next mở Bản đồ thay vì sang màn khác.
+        Call(Comp("LevelLoader", "LevelLoader"), "LoadLevel", 19);
+        yield return null;
+        yield return null;
+        Assert.IsNotNull(GameObject.Find("Level_1-20"));
         Call(Comp("Balloon", "BalloonController"), "ReachGoal");
-        yield return new WaitForSeconds(1.6f);
-        Assert.IsNotNull(GameObject.Find("Level_1-2"));
+        yield return new WaitForSecondsRealtime(1.2f);
+        Call(Screens, "Next");
+        yield return null;
+        Assert.AreEqual("Map", Get(Screens, "CurrentScreen"));
+        Assert.IsNotNull(GameObject.Find("HUD/Screens/Map/Viewport/Content/Grid1/Level_1-1"), "Bản đồ có nút màn 1-1");
+        Assert.IsNotNull(GameObject.Find("Level_1-20"));
 
         Call(Comp("LevelLoader", "LevelLoader"), "LoadLevel", 0); // trả về màn đầu cho test khác
+        yield return null;
+        yield return null;
+    }
+
+    [UnityTest]
+    public IEnumerator PauseLookAndIntro_UseTimeController()
+    {
+        SceneManager.LoadScene(0);
+        yield return null;
+        yield return null;
+        var screens = Screens;
+        Assert.IsNotNull(GameObject.Find("HUD/SafeArea/PauseButton"), "Nút Tạm dừng");
+        Assert.IsNotNull(GameObject.Find("HUD/SafeArea/LookButton"), "Nút Xem màn");
+
+        Call(screens, "Pause");
+        yield return null;
+        Assert.AreEqual(0f, Time.timeScale, "Tạm dừng dừng thế giới");
+        Assert.AreEqual("Pause", Get(screens, "CurrentScreen"));
+        // Nhả ngắm trong lúc đang tạm dừng không được làm thế giới chạy lại.
+        var tc = RuntimeType("TimeController");
+        var reasonType = RuntimeType("TimeReason");
+        tc.GetMethod("Set").Invoke(null, new object[] { System.Enum.Parse(reasonType, "Aim"), false });
+        Assert.AreEqual(0f, Time.timeScale);
+        Call(screens, "OpenSettings");
+        yield return null;
+        Assert.AreEqual(0f, Time.timeScale, "Cài đặt mở từ Tạm dừng vẫn dừng thế giới");
+        Call(screens, "Resume");
+        yield return null;
+        Assert.AreEqual(1f, Time.timeScale);
+
+        var director = Comp("LevelCameraDirector", "LevelCameraDirector");
+        Call(director, "SetLook", true);
+        Assert.AreEqual(0f, Time.timeScale, "Xem màn dừng thế giới");
+        Assert.IsTrue((bool)tc.GetProperty("IsBlockingInput").GetValue(null), "Đang Xem màn thì không được ngắm");
+        Call(director, "SetLook", false);
+        Assert.AreEqual(1f, Time.timeScale);
+
+        // Camera giới thiệu: dừng thế giới khi vào màn mới, tự hết sau khoảng 2.2 giây.
+        RuntimeType("GameFlow").GetField("IntroEnabled").SetValue(null, true);
+        RuntimeType("GameFlow").GetMethod("ForgetIntro").Invoke(null, null);
+        SceneManager.LoadScene(0);
+        yield return null;
+        yield return null;
+        Assert.AreEqual(0f, Time.timeScale, "Giới thiệu đầu màn dừng thế giới");
+        Assert.IsNotNull(GameObject.Find("HUD/SafeArea/Objectives"), "Bảng mục tiêu đầu màn");
+        yield return new WaitForSecondsRealtime(2.6f);
+        Assert.AreEqual(1f, Time.timeScale, "Hết giới thiệu thì thế giới chạy lại");
+        // Chơi lại cùng màn thì bỏ qua giới thiệu.
+        Call(Comp("LevelManager", "LevelManager"), "Restart");
+        yield return null;
+        yield return null;
+        Assert.AreEqual(1f, Time.timeScale, "Chơi lại không chạy lại giới thiệu");
+    }
+
+    [UnityTest]
+    public IEnumerator HomeScreen_PlayContinuesAndSettingsPersist()
+    {
+        RuntimeType("GameFlow").GetMethod("RequestHome").Invoke(null, null);
+        SceneManager.LoadScene(0);
+        yield return null;
+        yield return null;
+        Assert.AreEqual("Home", Get(Screens, "CurrentScreen"));
+        Assert.AreEqual(0f, Time.timeScale, "Trang chủ dừng thế giới");
+
+        RuntimeType("GameSettings").GetMethod("SetMusic").Invoke(null, new object[] { false });
+        Save("Save");
+        Save("UseFile", SavePath);
+        var settings = Field(SaveType.GetProperty("Data").GetValue(null), "settings");
+        Assert.AreEqual(0f, Field(settings, "musicVolume"), "Cài đặt phải lưu ra file");
+
+        Call(Screens, "PlayFromHome");
+        yield return null;
+        yield return null;
+        Assert.IsNull(Get(Screens, "CurrentScreen"));
+        Assert.AreEqual(1f, Time.timeScale);
+        Assert.IsNotNull(GameObject.Find("Level_1-1"), "Save trống: Chơi vào màn 1-1");
+    }
+
+    [UnityTest]
+    public IEnumerator World1Objects_CoinsLauncherAndHazards()
+    {
+        SceneManager.LoadScene(0);
+        yield return null;
+        yield return null;
+
+        // Xu: chạm vào thì nhặt, về đích thì cộng ví. Chơi lại chỉ được 5 xu (GDD §12.2).
+        Call(Comp("LevelLoader", "LevelLoader"), "LoadLevel", 2); // 1-3 có xu
+        yield return null;
+        yield return null;
+        var balloon = Comp("Balloon", "BalloonController");
+        var session = Comp("LevelSession", "LevelSession");
+        balloon.GetComponent<Rigidbody2D>().position = GameObject.Find("Level_1-3/Coin_0").transform.position;
+        yield return new WaitForFixedUpdate();
+        yield return new WaitForFixedUpdate();
+        yield return null;
+        Assert.AreEqual(1, Get(session, "CoinsThisRun"), "Chạm xu phải nhặt được");
+        Call(balloon, "ReachGoal");
+        yield return null;
+        Assert.AreEqual(1, Field(SaveType.GetProperty("Data").GetValue(null), "coins"), "Lần đầu: 1 xu mới");
+        Call(Comp("LevelManager", "LevelManager"), "Restart");
+        yield return null;
+        yield return null;
+        Call(Comp("Balloon", "BalloonController"), "ReachGoal");
+        yield return null;
+        Assert.AreEqual(6, Field(SaveType.GetProperty("Data").GetValue(null), "coins"), "Chơi lại: +5 xu");
+
+        // Pháo giấy: bóng chui vào thì bị giữ, bắn ra không tính cú chọc.
+        Call(Comp("LevelLoader", "LevelLoader"), "LoadLevel", 10); // 1-11
+        yield return null;
+        yield return null;
+        balloon = Comp("Balloon", "BalloonController");
+        var launcher = Comp("Level_1-11/Launcher", "Launcher");
+        balloon.GetComponent<Rigidbody2D>().position = launcher.transform.position;
+        yield return new WaitForFixedUpdate();
+        yield return new WaitForFixedUpdate();
+        yield return null;
+        Assert.IsTrue((bool)Get(balloon, "IsHeld"), "Pháo phải giữ bóng");
+        Assert.IsFalse((bool)Get(balloon, "CanAim"), "Đang trong pháo thì không ngắm được");
+        Call(launcher, "Fire");
+        yield return new WaitForFixedUpdate();
+        Assert.IsFalse((bool)Get(balloon, "IsHeld"));
+        Assert.Greater(((Vector2)Get(balloon, "Velocity")).magnitude, 3f, "Pháo bắn bóng đi");
+        Assert.AreEqual(0, Get(balloon, "PokeCount"), "Bắn pháo không tính cú chọc");
+
+        // Nến (nhóm D): chạm lửa là nổ ngay, lý do Burned.
+        Call(Comp("LevelLoader", "LevelLoader"), "LoadLevel", 14); // 1-15
+        yield return null;
+        yield return null;
+        balloon = Comp("Balloon", "BalloonController");
+        balloon.GetComponent<Rigidbody2D>().position = GameObject.Find("Level_1-15/Candle/Flame").transform.position;
+        yield return new WaitForFixedUpdate();
+        yield return new WaitForFixedUpdate();
+        yield return null;
+        Assert.AreEqual("Burned", Get(balloon, "LastFailReason").ToString());
+        yield return new WaitForSeconds(1.6f); // để tự chơi lại xong
+
+        // Màn trùm: máy hút bụi đứng yên tới cú chọc đầu.
+        Call(Comp("LevelLoader", "LevelLoader"), "LoadLevel", 19); // 1-20
+        yield return null;
+        yield return null;
+        var vacuum = GameObject.Find("Level_1-20/Vacuum").transform;
+        float y0 = vacuum.position.y;
+        yield return new WaitForSeconds(0.5f);
+        Assert.AreEqual(y0, vacuum.position.y, 1e-3f, "Mở màn an toàn: máy hút chưa chạy");
+        Call(Comp("Balloon", "BalloonController"), "TryVent", Vector2.up);
+        yield return new WaitForSeconds(0.5f);
+        Assert.Greater(vacuum.position.y, y0 + 0.1f, "Chọc rồi thì máy hút đuổi theo");
+
+        Call(Comp("LevelLoader", "LevelLoader"), "LoadLevel", 0);
         yield return null;
         yield return null;
     }

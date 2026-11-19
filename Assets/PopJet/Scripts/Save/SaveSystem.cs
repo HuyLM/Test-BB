@@ -20,6 +20,9 @@ namespace PopJet
         [Range(0f, 1f)] public float musicVolume = 1f;
         [Range(0f, 1f)] public float sfxVolume = 1f;
         public bool reduceMotion;
+
+        public bool SoundOn => sfxVolume > 0f;
+        public bool MusicOn => musicVolume > 0f;
     }
 
     /// <summary>Toàn bộ dữ liệu lưu của người chơi (GDD §15.7, phần 2.3).</summary>
@@ -94,7 +97,13 @@ namespace PopJet
         }
 
         /// <summary>Gộp kết quả một lượt vào thành tích của màn (từng sao riêng) rồi lưu ngay.</summary>
-        public static LevelRecord MergeResult(LevelResult result)
+        public static LevelRecord MergeResult(LevelResult result) => MergeResultWithCoins(result, null);
+
+        /// <summary>
+        /// Như MergeResult, kèm danh sách mã xu nhặt được trong lượt (chỉ lần nhặt đầu mới tính, GDD §12.2)
+        /// và cộng result.coinsEarned vào ví.
+        /// </summary>
+        public static LevelRecord MergeResultWithCoins(LevelResult result, IEnumerable<int> coinIds)
         {
             var rec = GetRecord(result.levelId);
             if (rec == null)
@@ -104,6 +113,10 @@ namespace PopJet
                 rec = entry.record;
             }
             rec.Merge(result);
+            if (coinIds != null)
+                foreach (int id in coinIds)
+                    if (!rec.coins.Contains(id)) rec.coins.Add(id);
+            if (result.coinsEarned > 0) Data.coins += result.coinsEarned;
             dirty = true;
             Save();
             return rec;
@@ -163,6 +176,11 @@ namespace PopJet
             data = TryRead(FilePath) ?? TryRead(FilePath + ".bak") ?? new SaveData();
             if (data.levels == null) data.levels = new List<LevelRecordEntry>();
             if (data.settings == null) data.settings = new SettingsData();
+            foreach (var e in data.levels)
+            {
+                if (e.record == null) e.record = new LevelRecord();
+                if (e.record.coins == null) e.record.coins = new List<int>();
+            }
             data.version = SaveData.CurrentVersion; // chỗ nâng cấp dữ liệu khi đổi version
         }
 

@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -7,7 +8,7 @@ namespace PopJet
     /// HUD tối thiểu của Giai đoạn 1 (GDD §10.3): nút Retry, số cú chọc, chữ lý do thua hiện ngay chỗ nổ,
     /// nhãn "Stuck?" và nút Retry nhấp nháy khi bóng bị kẹt. Thanh khí là AirBarUI riêng.
     /// Mọi hoạt ảnh chạy bằng unscaled time. Chữ lấy từ GameText (tiếng Anh).
-    /// Dùng UI Text thường cho prototype; Giai đoạn 2 đổi sang TextMeshPro.
+    /// Chữ dùng TextMeshPro (phần 2.4). Nút Tạm dừng, ô Sao, Xem màn và các màn hình nằm ở GameScreens.
     /// </summary>
     public class PopJetHud : MonoBehaviour
     {
@@ -16,10 +17,10 @@ namespace PopJet
         [Tooltip("Để trống thì số cú chọc hiện không kèm Par và không báo sao.")]
         [SerializeField] LevelSession session;
         [SerializeField] Button retryButton;
-        [SerializeField] Text retryLabel;
-        [SerializeField] Text pokeLabel;
-        [SerializeField] Text failLabel;
-        [SerializeField] Text stuckLabel;
+        [SerializeField] TMP_Text retryLabel;
+        [SerializeField] TMP_Text pokeLabel;
+        [SerializeField] TMP_Text failLabel;
+        [SerializeField] TMP_Text stuckLabel;
         [Tooltip("Chữ lý do thua hiện bao lâu (giây). Starting value.")]
         [SerializeField] float failLabelSeconds = 1.2f;
         [Tooltip("Chữ lý do thua nằm cao hơn chỗ nổ bao nhiêu (đơn vị canvas).")]

@@ -122,7 +122,7 @@ namespace PopJet
             if (restarting) return; // nút Retry và "chạm để chơi lại" có thể cùng gọi trong một frame
             restarting = true;
             CancelInvoke();
-            Time.timeScale = 1f;
+            TimeController.ResetAll();
             var scene = SceneManager.GetActiveScene();
             if (scene.buildIndex >= 0)
             {
@@ -153,7 +153,7 @@ namespace PopJet
             }
             if (string.IsNullOrEmpty(nextSceneName)) return;
             restarting = true;
-            Time.timeScale = 1f;
+            TimeController.ResetAll();
             SceneManager.LoadScene(nextSceneName);
         }
     }

@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f6f51e4d01e39a438bc52374c3a81de, type: 3}
+  m_Name: Level_1-4
+  m_EditorClassIdentifier: Assembly-CSharp::PopJet.LevelDefinition
+  id: 1-4
+  title: Bank Shot
+  world: 1
+  prefab: {fileID: 1938100999355519240, guid: bedb335e556102f429fab19c815863c1, type: 3}
+  par: 3
+  hint: 
+  notes: "N\u1EA3y t\u01B0\u1EDDng: v\xE1ch gi\u1EEFa che \u0111\xEDch ph\xEDa d\u01B0\u1EDBi
+    b\xEAn ph\u1EA3i. L\u1EDDi gi\u1EA3i: ch\u1ECDc ch\xE9o l\xEAn ph\u1EA3i qua
+    \u0111\u1EA7u v\xE1ch, n\u1EA3y t\u01B0\u1EDDng ph\u1EA3i r\u1ED3i r\u01A1i xu\u1ED1ng
+    \u0111\xEDch. Par t\u1EA1m."

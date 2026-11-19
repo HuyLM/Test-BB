@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.UI;
 using UnityEngine.UI;
+using TMPro;
 
 namespace PopJet.EditorTools
 {
@@ -293,7 +294,7 @@ namespace PopJet.EditorTools
             var existing = Object.FindAnyObjectByType<PopJetHud>();
             if (existing != null) { SetRefs(existing, ("balloon", balloon), ("level", level)); return; }
             EnsureEventSystem();
-            var font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            var font = EnsureTmpFont();
 
             var canvasGo = new GameObject("HUD", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
             var canvas = canvasGo.GetComponent<Canvas>();
@@ -318,21 +319,22 @@ namespace PopJet.EditorTools
             retryImg.type = Image.Type.Sliced;
             var btn = retry.gameObject.AddComponent<Button>();
             btn.targetGraphic = retryImg;
-            var retryText = UiText("Label", retry, font, 48, Ink, TextAnchor.MiddleCenter, false);
+            var retryText = UiText("Label", retry, font, 48, Ink, TextAlignmentOptions.Center, false);
             var rt = retryText.rectTransform;
             rt.anchorMin = Vector2.zero; rt.anchorMax = Vector2.one; rt.offsetMin = rt.offsetMax = Vector2.zero;
             retryText.text = GameText.Retry;
 
-            var stuck = UiText("StuckLabel", safe, font, 40, Color.white, TextAnchor.MiddleRight, true);
+            var stuck = UiText("StuckLabel", safe, font, 40, Color.white, TextAlignmentOptions.Right, true);
             Place(stuck.rectTransform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-40f, -176f), new Vector2(360f, 60f));
             stuck.text = GameText.Stuck;
             stuck.gameObject.SetActive(false);
 
-            var pokes = UiText("PokeLabel", safe, font, 44, Color.white, TextAnchor.MiddleLeft, true);
-            Place(pokes.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(40f, -52f), new Vector2(360f, 90f));
+            // Bên phải nút Tạm dừng (GameScreens dựng nút đó ở góc trên trái, rộng 132).
+            var pokes = UiText("PokeLabel", safe, font, 44, Color.white, TextAlignmentOptions.Left, true);
+            Place(pokes.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(192f, -52f), new Vector2(360f, 90f));
             pokes.text = GameText.Pokes(0);
 
-            var airLabel = UiText("AirLabel", safe, font, 36, Color.white, TextAnchor.MiddleRight, true);
+            var airLabel = UiText("AirLabel", safe, font, 36, Color.white, TextAlignmentOptions.Right, true);
             Place(airLabel.rectTransform, new Vector2(0.5f, 1f), new Vector2(1f, 1f), new Vector2(-276f, -190f), new Vector2(140f, 44f));
             airLabel.text = GameText.Air;
 
@@ -340,7 +342,7 @@ namespace PopJet.EditorTools
             Place(bar, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -190f), new Vector2(520f, 44f));
             SetRefs(bar.gameObject.AddComponent<AirBarUI>(), ("balloon", balloon), ("slotSprite", roundRect));
 
-            var fail = UiText("FailLabel", safe, font, 72, Color.white, TextAnchor.MiddleCenter, true);
+            var fail = UiText("FailLabel", safe, font, 72, Color.white, TextAlignmentOptions.Center, true);
             Place(fail.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(900f, 120f));
             fail.gameObject.SetActive(false);
 
@@ -372,25 +374,62 @@ namespace PopJet.EditorTools
             rt.sizeDelta = size;
         }
 
-        static Text UiText(string name, Transform parent, Font font, int size, Color color, TextAnchor align, bool outline)
+        static TextMeshProUGUI UiText(string name, Transform parent, TMP_FontAsset font, float size, Color color, TextAlignmentOptions align, bool outline)
         {
             var rt = UiRect(name, parent);
-            var t = rt.gameObject.AddComponent<Text>();
-            t.font = font;
+            var t = rt.gameObject.AddComponent<TextMeshProUGUI>();
+            if (font != null) t.font = font;
             t.fontSize = size;
-            t.fontStyle = FontStyle.Bold;
+            t.fontStyle = FontStyles.Bold;
             t.color = color;
             t.alignment = align;
             t.raycastTarget = false;
-            t.horizontalOverflow = HorizontalWrapMode.Overflow;
-            t.verticalOverflow = VerticalWrapMode.Overflow;
-            if (outline)
-            {
-                var o = rt.gameObject.AddComponent<Outline>();
-                o.effectColor = new Color(Ink.r, Ink.g, Ink.b, 0.9f);
-                o.effectDistance = new Vector2(3f, -3f);
-            }
+            t.textWrappingMode = TextWrappingModes.NoWrap;
+            t.overflowMode = TextOverflowModes.Overflow;
+            // Viền chữ: dùng chung một material preset (không tạo material instance trong scene).
+            if (outline && font != null) t.fontSharedMaterial = TmpOutlineMaterial(font);
             return t;
+        }
+
+        // ---------------- TextMeshPro (phần 2.4) ----------------
+
+        static Material TmpOutlineMaterial(TMP_FontAsset font)
+        {
+            string path = ArtDir + "/TMP_Outline.mat";
+            var m = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (m == null)
+            {
+                m = new Material(font.material);
+                AssetDatabase.CreateAsset(m, path);
+            }
+            m.CopyPropertiesFromMaterial(font.material);
+            m.SetTexture("_MainTex", font.material.GetTexture("_MainTex"));
+            m.EnableKeyword("OUTLINE_ON");
+            m.SetFloat("_OutlineWidth", 0.22f);
+            m.SetColor("_OutlineColor", new Color(Ink.r, Ink.g, Ink.b, 0.9f));
+            EditorUtility.SetDirty(m);
+            return m;
+        }
+
+        const string TmpFontPath = "Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF.asset";
+
+        /// <summary>Import TMP Essential Resources nếu chưa có (font SDF mặc định + TMP Settings), trả về font mặc định.</summary>
+        static TMP_FontAsset EnsureTmpFont()
+        {
+            var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(TmpFontPath);
+            if (font != null) return font;
+            var pkg = UnityEditor.PackageManager.PackageInfo.FindForAssetPath("Packages/com.unity.ugui");
+            string unitypackage = pkg != null ? pkg.resolvedPath + "/Package Resources/TMP Essential Resources.unitypackage" : null;
+            if (unitypackage == null || !File.Exists(unitypackage))
+            {
+                Debug.LogError("[PopJet] Không tìm thấy TMP Essential Resources.unitypackage trong com.unity.ugui.");
+                return null;
+            }
+            AssetDatabase.ImportPackage(unitypackage, false);
+            AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+            font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(TmpFontPath);
+            if (font == null) Debug.LogError("[PopJet] Đã import TMP Essentials nhưng chưa thấy " + TmpFontPath);
+            return font;
         }
     }
 }

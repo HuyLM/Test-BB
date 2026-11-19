@@ -43,17 +43,28 @@ Copy cả thư mục `PopJet` vào `Assets/` của project. Không cần package
 | `LevelLoader` | Object rỗng `LevelLoader` | Tạo prefab màn hiện tại khi scene load, đặt bóng và camera vào điểm xuất phát, `LoadLevel`/`LoadNext` |
 | `LevelSession` | Object rỗng `LevelSession` | Một lượt chơi: cú chọc so với Par, nhặt Sao, tính 3 sao + Vương miện khi về đích, gộp thành tích theo màn |
 | `StarPickup` | Sao trong prefab màn | Bóng chạm là nhặt (trigger), báo `LevelSession` |
+| `TimeController` | (static) | Nơi duy nhất ghi `Time.timeScale`: gom lý do dừng (Aim, Pause, Look, Intro, Menu); load scene thì xóa hết |
+| `GameScreens` | Canvas `HUD` | Dựng lúc chạy (UiKit, TextMeshPro): nút Tạm dừng, ô Sao, nút Xem màn, gợi ý tutorial, bảng mục tiêu đầu màn; màn Tạm dừng, Kết quả, Trang chủ, Bản đồ, Cài đặt |
+| `LevelCameraDirector` | Object rỗng `LevelCameraDirector` | Camera toàn cảnh (CM LookCam tạo lúc chạy) cho Xem màn và camera giới thiệu đầu màn |
+| `GameFlow`, `GameSettings` | (static) | Luồng màn hình qua các lần load scene (Trang chủ, giới thiệu); áp cài đặt âm thanh |
+| `CoinPickup` | Xu trong prefab màn | Chỉ lần nhặt đầu tính tiền; xu cộng vào ví khi về đích, chơi lại màn đã qua chỉ được 5 xu |
+| `PathMover` | Gai di chuyển, máy hút bụi | Kinematic, qua lại hoặc một chiều; tùy chọn chỉ chạy sau cú chọc đầu |
+| `Launcher` | Pháo giấy | Giữ bóng (`BalloonController.Hold`), nòng xoay, chạm để bắn (`Launch`), không tính cú chọc |
+| `HardHazard` | Lửa nến, miệng máy hút | Chạm là `Pop(reason)` |
+| `Cat` | Mèo ngủ | Bóng vào bán kính 1.8 thì dậy, 0.6 giây sau vồ |
+| `ForceField` | Vùng hút máy hút bụi | Hút về tâm, càng gần càng mạnh; chưa chọc lần đầu thì không hút |
 | `SaveSystem` | (static, tự chạy) | Lưu JSON: thành tích từng màn, màn gần nhất, xu, cài đặt; tự lưu khi qua màn, đổi màn, app xuống nền |
 
 ## 2b. Màn chơi (Giai đoạn 2, phần 2.1)
 
 - **Một scene gameplay** (`PopJet_Sample.unity`) chứa bóng, input, camera, HUD, nhạc, LevelManager và `LevelLoader`. **Nội dung màn** (tường, gai, quạt, keo, cửa, đích) là prefab trong `Levels/Prefabs/`, gốc có `LevelRoot` và object con `Spawn`.
 - Chơi lại và sang màn mới đều load lại scene gameplay; chỉ số màn giữ trong biến static của `LevelLoader`. Cách này reset sạch bóng, HUD, vật cản (khác GDD §15.7 định tạo lại prefab; đổi sau nếu load scene chậm trên máy thật).
-- Về đích thì tự sang màn kế sau `Win Delay` (màn hình Kết quả làm ở phần 2.5). Màn cuối thì đứng yên.
+- Về đích thì hiện màn **Kết quả** (3 sao phồng lần lượt, cú chọc / Par, xu, Vương miện; nút Next / Retry / Map). Màn cuối: Next mở Bản đồ.
 - **Thêm màn mới:** dựng prefab có `LevelRoot` + `Spawn` (đừng đặt bóng trong prefab), tạo `Assets > Create > PopJet > Level Definition`, gán prefab và Par, kéo vào `LevelCatalog`. Test một màn: đặt `Start Level Override` trên `LevelLoader` thành chỉ số của màn đó.
 - **3 sao (phần 2.2, GDD §3.4):** ★ Về đích, ★ Nhặt Sao, ★ Số cú chọc ≤ Par. Màn không đặt `StarPickup` thì sao thứ hai tự đạt. Đủ 3 sao trong **cùng một lượt** thì có Vương miện. Thành tích gộp từng sao qua các lượt (`LevelSession.GetRecord(id)`), hiện chỉ giữ trong bộ nhớ, phần 2.3 sẽ lưu ra file. HUD hiện "Pokes 1 / Par 4" (vượt Par thì chuyển cam), "Star!" khi nhặt Sao và số sao khi về đích. Mỗi màn nên có đúng 1 Sao, đặt lệch khỏi đường ngắn nhất.
 - **Lưu game (phần 2.3):** file `popjet_save.json` trong `Application.persistentDataPath` (menu `Tools > PopJet > Show Save File` mở thư mục, `Delete Save File` xóa để chơi lại từ đầu). Lưu: thành tích từng màn (từng sao, Vương miện, ít cú chọc nhất), màn chơi gần nhất (mở game là chơi tiếp màn đó), xu, cài đặt (rung, âm lượng nhạc/hiệu ứng, giảm chuyển động). Ghi qua file tạm rồi mới thay file chính, bản trước giữ ở `.bak`; file hỏng thì đọc `.bak`, hỏng nốt thì bắt đầu lại trống. Màn sau mở khi màn trước đã về đích (`LevelCatalog.IsUnlocked`); bản đồ ở phần 2.5 sẽ dùng. Cần lưu thêm gì thì thêm vào `SaveData`, đừng dùng PlayerPrefs riêng.
-- Hiện có 2 màn thử: `1-1` (đích ngay phía trên, Par 1) và `1-2` (bố cục scene mẫu cũ, Par 4 tạm). 20 màn thật làm ở phần 2.7. Builder **ghi đè** hai prefab màn này mỗi lần chạy; màn dựng tay nên đặt tên khác.
+- **20 màn Thế giới 1 (phần 2.7)** dựng trong `Editor/PopJetLevelBuilder.cs` theo GDD §8.2/§8.4: 1-1..1-10 tutorial (bố cục scene mẫu cũ giờ là 1-8), 1-11 pháo giấy, 1-12 gối bông, 1-15 nến (nhóm D đầu tiên), 1-18 mèo, 1-20 màn trùm máy hút bụi (cao 22, chưa có checkpoint). **Bố cục và Par chưa playtest**, ghi chú lời giải nằm trong `notes` của từng `LevelDefinition`. Builder **ghi đè** 20 prefab `Level_1-*` mỗi lần chạy; màn dựng tay nên đặt tên khác.
+- **HUD và màn hình (phần 2.4, 2.5):** chữ dùng TextMeshPro (builder tự import TMP Essentials; lần đầu nếu báo chưa thấy font thì chạy lại Build Sample Scene). Lần đầu mở game vào thẳng 1-1; Trang chủ chỉ hiện khi mở app sau khi đã qua 1-3. Vào màn mới: camera toàn cảnh + bảng 3 mục tiêu trong khoảng 2 giây (chạm để bỏ qua), chơi lại thì bỏ qua. Mọi dừng thời gian đi qua `TimeController`: nhả ngắm trong lúc Tạm dừng không làm thế giới chạy lại.
 
 ## 3. Dựng scene mẫu
 

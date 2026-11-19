@@ -18,6 +18,8 @@ namespace PopJet
         [SerializeField] LevelRoot prefab;
         [Tooltip("Số cú chọc chuẩn để được sao Par = lời giải tốt nhất của designer (GDD §3.4).")]
         [SerializeField, Min(1)] int par = 3;
+        [Tooltip("Một dòng gợi ý hiện ở cuối màn hình đầu màn (tutorial GDD §8.4, tiếng Anh). Để trống = không có.")]
+        [SerializeField] string hint;
         [Tooltip("Lời giải của designer và ghi chú dựng màn. Không hiện trong game.")]
         [SerializeField, TextArea(2, 6)] string notes;
 
@@ -26,5 +28,6 @@ namespace PopJet
         public int World => world;
         public LevelRoot Prefab => prefab;
         public int Par => par;
+        public string Hint => hint;
     }
 }

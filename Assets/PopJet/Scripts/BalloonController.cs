@@ -104,6 +104,7 @@ namespace PopJet
         bool burst;
         bool goal;
         bool started;
+        bool held;
         FailReason lastFailReason;
 
         public float Air01 => air;
@@ -117,7 +118,9 @@ namespace PopJet
         public FailReason LastFailReason => lastFailReason;
         public Vector2 Center => transform.position;
         public float Radius => circle.radius * transform.lossyScale.x;
-        public bool CanAim => !empty && !goal && air > 0f;
+        public bool CanAim => !empty && !goal && !held && air > 0f;
+        /// <summary>true = bóng đang bị giữ trong pháo giấy (Launcher), chưa bắn ra.</summary>
+        public bool IsHeld => held;
         public bool HasLeaks => LeakCount > 0;
         public int LeakCount { get { int n = 0; foreach (var j in jets) if (j.isLeak) n++; return n; } }
         public int VentCount { get { int n = 0; foreach (var j in jets) if (!j.isLeak) n++; return n; } }
@@ -225,7 +228,7 @@ namespace PopJet
         /// <summary>Gai gọi hàm này khi chạm bóng. hitPoint là điểm chạm trên bề mặt bóng.</summary>
         public bool AddLeak(Vector2 hitPoint)
         {
-            if (empty || goal) return false;
+            if (empty || goal || held) return false;
             if (LeakCount >= maxLeaks) return false;
             if (Time.time - lastLeakTime < leakCooldown) return false;
             lastLeakTime = Time.time;
@@ -264,9 +267,37 @@ namespace PopJet
             ApplyScale();
         }
 
+        /// <summary>
+        /// Giữ bóng đứng yên tại pos (pháo giấy). Bóng thành kinematic, mọi cú chọc và lỗ rò đang chạy dừng lại,
+        /// không ngắm được cho tới khi Launch.
+        /// </summary>
+        public bool Hold(Vector2 pos)
+        {
+            if (empty || goal || held) return false;
+            held = true;
+            aiming = false;
+            jets.Clear();
+            rb.bodyType = RigidbodyType2D.Kinematic;
+            SetVelocity(Vector2.zero);
+            rb.position = pos;
+            transform.position = pos;
+            return true;
+        }
+
+        /// <summary>Thả bóng đang bị giữ với vận tốc cho trước. Không tốn khí, không tính là cú chọc.</summary>
+        public void Launch(Vector2 velocity)
+        {
+            if (!held) return;
+            held = false;
+            rb.bodyType = RigidbodyType2D.Dynamic;
+            StartGame();
+            SetVelocity(velocity);
+        }
+
         public void ReachGoal()
         {
             if (goal || empty) return;
+            if (held) { held = false; rb.bodyType = RigidbodyType2D.Dynamic; }
             goal = true;
             aiming = false;
             jets.Clear();
@@ -281,6 +312,7 @@ namespace PopJet
         public void Pop(FailReason reason)
         {
             if (empty || goal) return;
+            if (held) { held = false; rb.bodyType = RigidbodyType2D.Dynamic; }
             air = 0f;
             BecomeEmpty(reason, true);
         }
@@ -308,7 +340,7 @@ namespace PopJet
 
         void FixedUpdate()
         {
-            if (empty || goal) return;
+            if (empty || goal || held) return;
 
             float dt = Time.fixedDeltaTime;
             float thrustScale = Mathf.Lerp(minThrustWhenLow, 1f, air);
@@ -359,6 +391,15 @@ namespace PopJet
         {
             float s = Mathf.Lerp(minScale, 1f, air) * baseScale;
             transform.localScale = new Vector3(s, s, 1f);
+        }
+
+        void SetVelocity(Vector2 v)
+        {
+#if UNITY_6000_0_OR_NEWER
+            rb.linearVelocity = v;
+#else
+            rb.velocity = v;
+#endif
         }
 
         void SetDamping(float value)

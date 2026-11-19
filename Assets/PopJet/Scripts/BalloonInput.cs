@@ -84,7 +84,7 @@ namespace PopJet
         [SerializeField] float needleGap = 0.6f;
         [SerializeField] float arrowLength = 1.5f;
         [SerializeField] float stabDuration = 0.08f;
-        [Tooltip("Đang giữ chọn hướng kim thì dừng toàn bộ thế giới (vật lý, quạt, cửa, particle, camera) bằng Time.timeScale = 0.\n" +
+        [Tooltip("Đang giữ chọn hướng kim thì dừng toàn bộ thế giới (vật lý, quạt, cửa, particle, camera) qua TimeController.\n" +
                  "Thời gian chơi trong LevelManager dùng unscaled time nên vẫn đếm.")]
         [SerializeField] bool freezeWorldWhileAiming = true;
 
@@ -125,7 +125,7 @@ namespace PopJet
 
             if (!aiming)
             {
-                if (PointerHelper.Down && balloon.CanAim &&
+                if (PointerHelper.Down && balloon.CanAim && !TimeController.IsBlockingInput &&
                     Vector2.Distance(world, center) <= balloon.Radius * grabPadding &&
                     !PointerHelper.IsOverUI(PointerHelper.ScreenPos))
                     BeginAim();
@@ -186,7 +186,7 @@ namespace PopJet
         void SetWorldFrozen(bool frozen)
         {
             if (!freezeWorldWhileAiming) return;
-            Time.timeScale = frozen ? 0f : 1f;
+            TimeController.Set(TimeReason.Aim, frozen);
         }
 
         // Không bao giờ để game kẹt ở timeScale 0 khi object bị tắt/hủy giữa lúc đang giữ (đổi scene, restart...).
@@ -198,7 +198,7 @@ namespace PopJet
                 if (balloon != null) balloon.SetAiming(false);
                 HideAimVisuals();
             }
-            if (freezeWorldWhileAiming) Time.timeScale = 1f;
+            TimeController.Set(TimeReason.Aim, false);
         }
 
         void UpdateVisuals(Vector2 center)

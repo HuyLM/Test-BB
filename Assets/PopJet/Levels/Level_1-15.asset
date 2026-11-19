@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f6f51e4d01e39a438bc52374c3a81de, type: 3}
+  m_Name: Level_1-15
+  m_EditorClassIdentifier: Assembly-CSharp::PopJet.LevelDefinition
+  id: 1-15
+  title: Birthday Cake
+  world: 1
+  prefab: {fileID: 6144471652457988504, guid: fed97a94c27fe4e4b917aaf41b12be16, type: 3}
+  par: 3
+  hint: Fire pops you instantly!
+  notes: "Nh\xF3m D l\u1EA7n \u0111\u1EA7u (\xA75.1): ba c\xE2y n\u1EBFn tr\xEAn
+    b\xE1nh. L\u1EEDa n\u1ED5 ngay. V\xF2ng qua hai b\xEAn. Par t\u1EA1m."

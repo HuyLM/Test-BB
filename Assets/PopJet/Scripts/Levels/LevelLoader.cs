@@ -84,7 +84,7 @@ namespace PopJet
         {
             if (catalog == null || catalog.Count == 0) return;
             currentIndex = Mathf.Clamp(index, 0, catalog.Count - 1);
-            Time.timeScale = 1f;
+            TimeController.ResetAll();
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         }
 

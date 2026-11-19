@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f6f51e4d01e39a438bc52374c3a81de, type: 3}
+  m_Name: Level_1-20
+  m_EditorClassIdentifier: Assembly-CSharp::PopJet.LevelDefinition
+  id: 1-20
+  title: The Vacuum
+  world: 1
+  prefab: {fileID: 7367158222727249848, guid: 245499f67b0877b45a3e663b2c32c654, type: 3}
+  par: 7
+  hint: Climb! The vacuum is coming
+  notes: "M\xE0n tr\xF9m (\xA78.1): m\xE1y h\xFAt b\u1EE5i \u0111u\u1ED5i t\u1EEB
+    d\u01B0\u1EDBi l\xEAn 0.45 \u0111\u01A1n v\u1ECB/gi\xE2y (ch\u1EC9 ch\u1EA1y
+    sau c\xFA ch\u1ECDc \u0111\u1EA7u). Cao 2.2 m\xE0n h\xECnh, ch\u01B0a c\xF3 checkpoint
+    (\xA76 #9 ch\u01B0a l\xE0m). 3 keo v\xE1 h\u1ED3i kh\xED, qu\u1EA1t v\xE0 ph\xE1o
+    gi\u1EA5y gi\xFAp leo mi\u1EC5n ph\xED. Par t\u1EA1m."
