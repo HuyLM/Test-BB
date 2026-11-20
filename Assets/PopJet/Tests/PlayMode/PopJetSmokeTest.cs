@@ -442,6 +442,23 @@ public class PopJetSmokeTest
         Assert.AreEqual("Burned", Get(balloon, "LastFailReason").ToString());
         yield return new WaitForSeconds(1.6f); // để tự chơi lại xong
 
+        // Trạm bơm (§6 #8): ở trong vùng thì khí hồi dần, mỗi trạm hồi tối đa capacity. Keo vá không hồi khí.
+        Call(Comp("LevelLoader", "LevelLoader"), "LoadLevel", 18); // 1-19
+        yield return null;
+        yield return null;
+        balloon = Comp("Balloon", "BalloonController");
+        var pump = Comp("Level_1-19/Pump", "PumpStation");
+        float cap = (float)Get(pump, "Capacity");
+        SetField(balloon, "air", 0.2f);
+        balloon.GetComponent<Rigidbody2D>().position = pump.transform.position;
+        yield return new WaitForSeconds(0.6f);
+        float air1 = (float)Get(balloon, "Air01");
+        Assert.Greater(air1, 0.25f, "Trạm bơm phải hồi khí");
+        Assert.Less((float)Get(pump, "Remaining"), cap, "Trạm bơm phải vơi đi");
+        yield return new WaitForSeconds(cap / 0.25f + 0.6f);
+        Assert.AreEqual(0f, (float)Get(pump, "Remaining"), 1e-3f, "Trạm hết khí sau khi hồi đủ capacity");
+        Assert.AreEqual(0.2f + cap, (float)Get(balloon, "Air01"), 0.02f, "Tổng khí hồi đúng bằng capacity, không cày được");
+
         // Màn trùm: máy hút bụi đứng yên tới cú chọc đầu.
         Call(Comp("LevelLoader", "LevelLoader"), "LoadLevel", 19); // 1-20
         yield return null;

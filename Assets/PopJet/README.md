@@ -16,7 +16,7 @@ Copy cả thư mục `PopJet` vào `Assets/` của project. Không cần package
 | `BalloonFeedback` | Bóng | Âm thanh + particle theo sự kiện |
 | `Spike` | Gai | Chạm bóng thì tạo thêm lỗ rò |
 | `BalloonBounce` | Bóng | Bóp dẹt + rung mềm và tiếng "bộp" khi va tường, sự kiện `Bounced` (độ nảy thật do `PhysicsMaterial2D`) |
-| `PatchPickup` | Keo vá | Vá hết lỗ rò, hồi 30% khí |
+| `PatchPickup` | Keo vá | Vá hết lỗ rò, không hồi khí; chỉ dùng khi bóng đang rò |
 | `Fan` | Quạt | Đẩy bóng theo trục +X local |
 | `ButtonSwitch` | Nút | Mở cửa gán sẵn |
 | `Door` | Cửa | Trượt mở/đóng |
@@ -53,6 +53,7 @@ Copy cả thư mục `PopJet` vào `Assets/` của project. Không cần package
 | `HardHazard` | Lửa nến, miệng máy hút | Chạm là `Pop(reason)` |
 | `Cat` | Mèo ngủ | Bóng vào bán kính 1.8 thì dậy, 0.6 giây sau vồ |
 | `ForceField` | Vùng hút máy hút bụi | Hút về tâm, càng gần càng mạnh; chưa chọc lần đầu thì không hút |
+| `PumpStation` | Trạm bơm gắn tường (1-19, 1-20) | Bóng trong vùng thì hồi khí dần (`AddAir`), mỗi trạm hồi tối đa `capacity`; kéo nhẹ bóng về tâm khi không vent; đồng hồ trên trạm vơi theo khí còn lại. Builder: `PumpAt(level, y, onLeftWall)` |
 | `SaveSystem` | (static, tự chạy) | Lưu JSON: thành tích từng màn, màn gần nhất, xu, cài đặt; tự lưu khi qua màn, đổi màn, app xuống nền |
 
 ## 2b. Màn chơi (Giai đoạn 2, phần 2.1)
@@ -119,9 +120,11 @@ Tất cả đều là starting value, không có nguồn chuẩn.
 
 | Thông số | Giá trị | Ở đâu | Nếu sai |
 |---|---|---|---|
-| Lực chọc / thời gian | 6 / 1.5 giây | `BalloonController` | Bóng bay không đủ xa: tăng lực trước, không tăng thời gian |
-| Khí mất mỗi lần chọc | 0.18 | `BalloonController` | Người mới hết khí ở 5 màn đầu: giảm xuống 0.10-0.15 |
-| Lỗ rò: lực / thời gian / khí | 1.8 / 3 giây / 0.06 | `BalloonController` | Bóng "tự bay lung tung": giảm lực rò trước. Lỗ rò tiết kiệm khí hơn cú chọc ~1.8 lần; GDD giữ làm kỹ năng "rò chiến thuật" |
+| Lực chọc / thời gian | 4 / 2.25 giây (cũ 6 / 1.5, đổi 2026-11-19: vent lâu hơn, cùng xung lực) | `BalloonController` | Bóng bay không đủ xa: tăng lực trước, không tăng thời gian. Đổi thời gian thì chỉnh lực để giữ lực × thời gian ≈ 9 |
+| Trạm bơm: tốc độ / tổng mỗi trạm / lực giữ | 0.25 khí/giây / 0.5 / 4 | `PumpStation` | Bóng trôi khỏi vùng trước khi bơm xong: tăng lực giữ. Màn quá dễ: giảm tổng mỗi trạm |
+| Khí mất mỗi lần chọc | 0.12 (~8 cú chọc; cũ 0.18, giảm 2026-11-19 cho dễ hơn) | `BalloonController` | Vẫn hết khí sớm: giảm tiếp xuống 0.10. Quá dễ, Par vô nghĩa: tăng về 0.15 |
+| Lực khi khí gần cạn | 0.75 (cũ 0.6) | `BalloonController.minThrustWhenLow` | Cú chọc cuối vẫn quá yếu: tăng lên 0.85 |
+| Lỗ rò: lực / thời gian / khí | 1.8 / 3 giây / 0.04 (cũ 0.06) | `BalloonController` | Bóng "tự bay lung tung": giảm lực rò trước. Lỗ rò tiết kiệm khí hơn cú chọc ~1.8 lần; GDD giữ làm kỹ năng "rò chiến thuật" |
 | Cooldown giữa 2 lỗ rò | 0.5 giây | `BalloonController` | Trượt dọc gai vẫn bị kẹt: tăng cooldown |
 | Số lỗ rò tối đa | 4 | `BalloonController` | |
 | Vùng hủy | 40% bán kính bóng | `BalloonInput` | Người mới hủy nhầm: thu nhỏ |
@@ -130,7 +133,6 @@ Tất cả đều là starting value, không có nguồn chuẩn.
 | Hết khí = vỡ tung | Bật | `BalloonController` → `Pop When Empty` | Bóng đứng yên, ẩn đi, `BalloonFeedback` bắn prefab `PopBurst`, phát `Pop Clips`, gọi `On Popped` → rung camera. Tắt thì quay về kiểu xẹp rơi với `Empty Gravity Scale`. `Pop(lý do)` luôn vỡ tung |
 | Rung camera khi vỡ | biên độ 0.18, 0.35 giây | `Balloon` → `CinemachineImpulseSource` | Rung chóng mặt: giảm biên độ. Không cảm thấy nổ: tăng lên 0.3 |
 | Trọng lực khi đang chơi | 0.05 (rơi ~0.33 đơn vị/giây) | `BalloonController` → `Play Gravity Scale` | Rơi nhanh quá/khó giữ bóng: giảm; không thấy áp lực: tăng 0.02 mỗi lần |
-| Khí hồi khi ăn keo | 0.3 | `PatchPickup` | Màn quá dễ vì keo hồi quá nhiều: giảm về 0.2 |
 | Độ nảy / ma sát bóng | 0.85 / 0.05 | `BalloonBouncy.physicsMaterial2D` | Bóng "bật như cao su": giảm bounciness. Bóng dính tường: giảm friction |
 | Bóp dẹt tối đa / tốc độ dẹt hết cỡ | 0.35 / 2.5 | `BalloonBounce` | Không thấy mềm: tăng `Max Squash`. Rung quá lâu: tăng `Spring Damping` |
 | Camera: damping / dead zone / ortho size | 0.4 / 10% / 3.5 ở 9:16 | `CM FollowCam`, `CameraAspectFit` | Camera trễ quá: giảm damping. Không thấy đường bay: tăng `Reference Ortho Size` |

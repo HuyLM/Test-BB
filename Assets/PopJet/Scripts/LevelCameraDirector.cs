@@ -13,6 +13,9 @@ namespace PopJet
     /// </summary>
     public class LevelCameraDirector : MonoBehaviour
     {
+        /// <summary>Sprite có sortingOrder &lt;= giá trị này là nền trang trí (builder đặt -20/-19), không tính vào khung màn.</summary>
+        public const int BackgroundOrderMax = -10;
+
         [SerializeField] CinemachineCamera followCam;
         [SerializeField] LevelLoader loader;
         [Tooltip("Thời gian blend giữa camera follow và toàn cảnh (giây, unscaled). Starting value.")]
@@ -69,6 +72,8 @@ namespace PopJet
             bool any = false;
             foreach (var r in root.GetComponentsInChildren<SpriteRenderer>())
             {
+                // Bỏ qua lớp nền trang trí (order <= -10): ảnh nền rộng hơn hộp màn, tính vào sẽ làm khung toàn cảnh bị lệch.
+                if (r.sortingOrder <= BackgroundOrderMax) continue;
                 if (!any) { b = r.bounds; any = true; }
                 else b.Encapsulate(r.bounds);
             }

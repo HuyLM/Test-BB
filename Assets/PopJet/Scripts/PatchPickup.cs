@@ -4,15 +4,13 @@ using UnityEngine.Events;
 namespace PopJet
 {
     /// <summary>
-    /// Keo vá: chạm vào là vá ngay mọi lỗ rò, có thể hồi thêm một ít khí.
-    /// Chỉ bị dùng khi thật sự có ích (có lỗ rò hoặc bóng chưa đầy khí) để người chơi không lỡ mất.
+    /// Keo vá: chạm vào là vá ngay mọi lỗ rò. Chỉ vá, KHÔNG bơm thêm khí (hồi khí là việc của trạm bơm, GDD §6 #8).
+    /// Chỉ bị dùng khi bóng đang có lỗ rò, để người chơi không lỡ mất keo lúc chưa cần.
     /// Collider phải là trigger.
     /// </summary>
     [RequireComponent(typeof(Collider2D))]
     public class PatchPickup : MonoBehaviour
     {
-        [Tooltip("Lượng khí hồi khi ăn keo (0.3 = 30%, gấp 3 mức cũ 10%).")]
-        [SerializeField, Range(0f, 1f)] float airRefill = 0.3f;
         [SerializeField] bool singleUse = true;
         [Tooltip("Sau bao nhiêu giây thì keo xuất hiện lại. 0 = không xuất hiện lại.")]
         [SerializeField] float respawnDelay = 0f;
@@ -33,11 +31,9 @@ namespace PopJet
             var balloon = other.GetComponentInParent<BalloonController>();
             if (balloon == null) return;
 
-            bool useful = balloon.HasLeaks || balloon.Air01 < 0.999f;
-            if (!useful) return;
+            if (!balloon.HasLeaks) return;
 
             balloon.PatchAll();
-            balloon.AddAir(airRefill);
             onUsed?.Invoke();
 
             if (singleUse)

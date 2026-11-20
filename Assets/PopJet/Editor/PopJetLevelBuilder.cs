@@ -16,8 +16,8 @@ namespace PopJet.EditorTools
     {
         const string LevelDir = Root + "/Levels";
         const string LevelPrefabDir = LevelDir + "/Prefabs";
-        static readonly Color WallColor = new Color(0.45f, 0.48f, 0.55f);
-        static readonly Color ShelfColor = new Color(0.62f, 0.47f, 0.33f);
+        static readonly Color WallColor = new Color(0.55f, 0.42f, 0.31f);  // gỗ đậm, khung màn (§9.3 Thế giới 1)
+        static readonly Color ShelfColor = new Color(0.77f, 0.60f, 0.42f); // gỗ #C49A6C
         static readonly Color PinColor = new Color(0.7f, 0.72f, 0.78f);
         static readonly Color HazardColor = new Color(1f, 0.66f, 0.1f); // nhóm D: vàng cam, không dùng đỏ (§5.1)
 
@@ -50,6 +50,7 @@ namespace PopJet.EditorTools
             EnsureDir(LevelPrefabDir);
             starSprite = MakeSprite("Star", 128, StarShape);
             pillowMat = MakePillowMaterial();
+            artCache.Clear();
 
             var specs = WorldOneLevels();
             var defs = new List<Object>();
@@ -149,10 +150,10 @@ namespace PopJet.EditorTools
                 L("1-18", "Cat Nap", 3, "Don't wake the cat", Level_1_18,
                     "Mèo ngủ (§5.2 #20): mèo trên kệ trái, đích phía trên mèo. Phải lên từ bên phải rồi chọc ngang vào đích, tránh bán kính 1.8. Par tạm."),
                 L("1-19", "Kitchen Chaos", 4, null, Level_1_19,
-                    "Phối trộn: mèo + nến + quạt. Par tạm."),
+                    "Phối trộn: mèo + nến + quạt + trạm bơm tường trái (thay keo vá: màn không có gai nên keo vô dụng). Par tạm."),
                 L("1-20", "The Vacuum", 7, "Climb! The vacuum is coming", Level_1_20,
                     "Màn trùm (§8.1): máy hút bụi đuổi từ dưới lên 0.45 đơn vị/giây (chỉ chạy sau cú chọc đầu). Cao 2.2 màn hình, " +
-                    "chưa có checkpoint (§6 #9 chưa làm). 3 keo vá hồi khí, quạt và pháo giấy giúp leo miễn phí. Par tạm."),
+                    "chưa có checkpoint (§6 #9 chưa làm). 3 keo vá (chỉ vá, không hồi khí), quạt và pháo giấy giúp leo miễn phí. Par tạm."),
             };
         }
 
@@ -383,7 +384,7 @@ namespace PopJet.EditorTools
             Candle(l, new Vector2(0.2f, -0.95f));
             Shelf(l, new Vector2(-0.6f, 2.0f), new Vector2(4.4f, 0.3f));
             CatAt(l, new Vector2(-0.2f, 2.45f));
-            Patch(l, new Vector2(-2.3f, 0.6f));
+            PumpAt(l, 0.9f, true); // đủ cao để bóng đang bơm không quệt lửa nến bên dưới (đỉnh lửa y ≈ 0.05)
             Goal(l, new Vector2(-1.8f, 4.0f), 1.0f);
             StarAt(l, new Vector2(2.3f, 4.0f));
             CoinLine(l, new Vector2(1.85f, -3.6f), new Vector2(1.85f, 1.6f), 4);
@@ -405,6 +406,7 @@ namespace PopJet.EditorTools
             Shelf(l, new Vector2(-0.6f, 13.0f), new Vector2(4.4f, 0.3f));
             FanAt(l, new Vector2(2.2f, 1.0f), 90f, 4.4f, 1.0f);
             Patch(l, new Vector2(-2.2f, 5.0f));
+            PumpAt(l, 5.0f, false); // tầng 1, ngay trên khe phải: nạp khí trước khi leo tiếp
             LauncherAt(l, new Vector2(-2.0f, 6.0f), 0f, 0f);
             Spikes(l, "Spike_F2", new Vector2(1.2f, 7.6f), 2.4f, 180f);
             Patch(l, new Vector2(2.2f, 10.0f));
@@ -470,6 +472,7 @@ namespace PopJet.EditorTools
         static void OuterWalls(Transform level, float height = 10f)
         {
             float cy = -5f + height * 0.5f;
+            RoomBackground(level, height);
             Wall("Wall_Left", new Vector2(-2.95f, cy), new Vector2(0.3f, height + 0.6f), WallColor, level);
             Wall("Wall_Right", new Vector2(2.95f, cy), new Vector2(0.3f, height + 0.6f), WallColor, level);
             Wall("Wall_Bottom", new Vector2(0f, -5.15f), new Vector2(6.2f, 0.3f), WallColor, level);
@@ -498,6 +501,21 @@ namespace PopJet.EditorTools
             spike.transform.rotation = Quaternion.Euler(0f, 0f, angle);
             spike.AddComponent<BoxCollider2D>().size = new Vector2(width, 0.4f);
             spike.AddComponent<Spike>();
+            var pin = ArtSprite("Pin");
+            if (pin != null)
+            {
+                // Art §9.6: hàng đinh ghim quay lưng vào nhau, mũi chĩa ra hai phía. Hình nhô hơn hộp collider 0.4
+                // một chút (±0.29) để người chơi thấy vùng nguy hiểm sớm, không bị "chạm mà không thấy".
+                int pins = Mathf.Max(1, Mathf.RoundToInt(width / 0.3f));
+                float pStep = width / pins;
+                for (int i = 0; i < pins; i++)
+                {
+                    float x = -width * 0.5f + pStep * (i + 0.5f);
+                    AddArt(spike.transform, pin, 0.38f, 5, new Vector2(x, 0.1f), 180f).name = "PinUp_" + i;   // ảnh gốc mũi chĩa xuống
+                    AddArt(spike.transform, pin, 0.38f, 5, new Vector2(x, -0.1f)).name = "PinDown_" + i;
+                }
+                return spike;
+            }
             int n = Mathf.Max(1, Mathf.RoundToInt(width / 0.4f));
             float step = width / n;
             for (int i = 0; i < n; i++)
@@ -535,9 +553,79 @@ namespace PopJet.EditorTools
             patch.transform.SetParent(level);
             patch.transform.position = pos;
             patch.transform.localScale = Vector3.one * 0.5f;
-            AddSprite(patch, circle, new Color(1f, 0.85f, 0.25f), 4);
-            patch.AddComponent<CircleCollider2D>().isTrigger = true;
-            SetFloat(patch.AddComponent<PatchPickup>(), "airRefill", 0.3f);
+            var art = ArtSprite("Patch");
+            if (art != null) AddArt(patch.transform, art, 1.1f, 4, Vector2.zero);
+            else AddSprite(patch, circle, new Color(1f, 0.85f, 0.25f), 4);
+            var pc = patch.AddComponent<CircleCollider2D>();
+            pc.radius = 0.5f; // giữ nguyên vùng nhặt như placeholder (đường kính 0.5 world)
+            pc.isTrigger = true;
+            patch.AddComponent<PatchPickup>(); // chỉ vá lỗ rò, không hồi khí
+        }
+
+        /// <summary>
+        /// Trạm bơm gắn tường (§6 #8): thân sát tường trong, vòi chĩa vào phòng, vùng bơm tròn bán kính 0.7
+        /// cách tường 1.25. onLeftWall = gắn tường trái (vòi chĩa sang phải). Đồng hồ trên thân vơi dần theo khí còn lại.
+        /// </summary>
+        static void PumpAt(Transform level, float y, bool onLeftWall)
+        {
+            float dir = onLeftWall ? 1f : -1f; // hướng vòi
+            var go = new GameObject("Pump");
+            go.transform.SetParent(level);
+            go.transform.position = new Vector2(-dir * 2.8f + dir * 1.25f, y);
+            var c = go.AddComponent<CircleCollider2D>();
+            c.radius = 0.7f;
+            c.isTrigger = true;
+
+            var zone = new GameObject("Zone");
+            zone.transform.SetParent(go.transform, false);
+            zone.transform.localScale = Vector3.one * 1.4f;
+            var zoneSr = AddSprite(zone, circle, new Color(0.75f, 0.9f, 1f, 0.35f), 1);
+
+            var body = new GameObject("Body");
+            body.transform.SetParent(go.transform, false);
+            body.transform.localPosition = new Vector3(-dir * 0.9f, 0f, 0f);
+            var art = ArtSprite("Pump");
+            if (art != null)
+            {
+                // Ảnh gốc: giá treo bên trái, vòi chĩa sang phải; gắn tường phải thì lật ngang.
+                // Đặt thân sao cho giá treo áp sát mép tường trong (cách tâm vùng bơm 1.25).
+                const float artH = 0.95f;
+                float artW = art.bounds.size.x / art.bounds.size.y * artH;
+                body.transform.localPosition = new Vector3(-dir * (1.25f - artW * 0.5f), 0f, 0f);
+                AddArt(body.transform, art, artH, 4, Vector2.zero).flipX = !onLeftWall;
+            }
+            else
+            {
+                var box = new GameObject("Box");
+                box.transform.SetParent(body.transform, false);
+                box.transform.localScale = new Vector3(0.5f, 0.75f, 1f);
+                AddSprite(box, roundRect != null ? roundRect : square, new Color(0.35f, 0.62f, 0.85f), 4);
+                var nozzle = new GameObject("Nozzle");
+                nozzle.transform.SetParent(body.transform, false);
+                nozzle.transform.localPosition = new Vector3(dir * 0.35f, 0f, 0f);
+                nozzle.transform.localScale = new Vector3(0.25f, 0.14f, 1f);
+                AddSprite(nozzle, square, new Color(0.17f, 0.17f, 0.23f), 4);
+            }
+
+            // Đồng hồ khí của trạm: nền tối + vạch xanh (neo ở mép trái để vơi từ phải sang).
+            // Có art thì canh trên phần hộp (lệch về phía tường), không canh giữa cả ảnh (có cả vòi).
+            float gx = art != null ? -dir * 0.18f : 0f;
+            var gaugeBg = new GameObject("GaugeBg");
+            gaugeBg.transform.SetParent(body.transform, false);
+            gaugeBg.transform.localPosition = new Vector3(gx, 0.62f, 0f);
+            gaugeBg.transform.localScale = new Vector3(0.62f, 0.12f, 1f);
+            AddSprite(gaugeBg, square, new Color(0.17f, 0.17f, 0.23f), 5);
+            var gauge = new GameObject("Gauge");
+            gauge.transform.SetParent(body.transform, false);
+            gauge.transform.localPosition = new Vector3(gx - 0.28f, 0.62f, 0f);
+            var fill = new GameObject("Fill");
+            fill.transform.SetParent(gauge.transform, false);
+            fill.transform.localPosition = new Vector3(0.28f, 0f, 0f);
+            fill.transform.localScale = new Vector3(0.56f, 0.07f, 1f);
+            AddSprite(fill, square, new Color(0.114f, 0.62f, 0.459f), 6); // #1D9E75 như vòng khí
+
+            var pump = go.AddComponent<PumpStation>();
+            SetRefs(pump, ("gauge", gauge.transform), ("zone", zoneSr));
         }
 
         /// <summary>Quạt: +X local là hướng gió. angle 90 = thổi lên. pos là tâm vùng gió.</summary>
@@ -558,6 +646,16 @@ namespace PopJet.EditorTools
             var body = new GameObject("FanBody");
             body.transform.SetParent(fan.transform, false);
             body.transform.localPosition = new Vector3(-length * 0.5f, 0f, 0f);
+            var art = ArtSprite("Fan");
+            if (art != null)
+            {
+                // Quạt nhìn chính diện, đỉnh ảnh quay theo hướng gió (+X local), chân quạt đặt đúng mép đầu vùng gió
+                // (vùng gió thường bắt đầu sát sàn/tường, lùi ra sau sẽ lòi qua tường).
+                float size = Mathf.Clamp(width * 0.8f, 0.6f, 1.1f);
+                body.transform.localPosition = new Vector3(-length * 0.5f + size * 0.5f, 0f, 0f);
+                AddArt(body.transform, art, size, 3, Vector2.zero, -90f);
+                return;
+            }
             body.transform.localScale = new Vector3(0.25f, width, 1f);
             AddSprite(body, square, new Color(0.3f, 0.65f, 0.85f), 3);
         }
@@ -568,7 +666,9 @@ namespace PopJet.EditorTools
             star.transform.SetParent(level);
             star.transform.position = pos;
             star.transform.localScale = Vector3.one * 0.6f;
-            AddSprite(star, starSprite, new Color(1f, 0.824f, 0.247f), 6); // #FFD23F
+            var art = ArtSprite("Star");
+            if (art != null) AddArt(star.transform, art, 1.05f, 6, Vector2.zero);
+            else AddSprite(star, starSprite, new Color(1f, 0.824f, 0.247f), 6); // #FFD23F
             star.AddComponent<CircleCollider2D>().radius = 0.4f;
             star.AddComponent<StarPickup>();
         }
@@ -682,6 +782,15 @@ namespace PopJet.EditorTools
             var hz = flame.AddComponent<HardHazard>();
             SetRefs(hz, ("flicker", fire.transform));
             SetEnum(hz, "reason", (int)FailReason.Burned);
+
+            var art = ArtSprite("Candle");
+            if (art != null)
+            {
+                // Ảnh nến gồm đế, thân sáp và lửa; đáy ảnh trùng basePos, đỉnh lửa ~0.98 khớp collider lửa (0.61..0.95).
+                wax.GetComponent<SpriteRenderer>().enabled = false;
+                fire.GetComponent<SpriteRenderer>().enabled = false;
+                AddArt(go.transform, art, 1f, 4, new Vector2(0f, 0.5f));
+            }
         }
 
         /// <summary>Mèo ngủ (§5.2 #20): pos = chân mèo (đặt ngay trên kệ).</summary>

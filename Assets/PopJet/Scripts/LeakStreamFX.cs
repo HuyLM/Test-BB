@@ -26,6 +26,12 @@ namespace PopJet
         [SerializeField] Color holeColor = new Color(0.17f, 0.17f, 0.23f);
         [SerializeField] Color tapeColor = new Color(0.957f, 0.835f, 0.553f); // #F4D58D
         [SerializeField] int sortingOrder = 12;
+        [Tooltip("Kích thước vết lỗ (local của bóng): x theo tiếp tuyến, y theo bán kính. Dẹt theo bán kính " +
+                 "vì lỗ nằm sát mép mặt cầu nhìn nghiêng. Starting value.")]
+        [SerializeField] Vector2 holeSize = new Vector2(0.1f, 0.065f);
+        [Tooltip("Thụt vết lỗ/băng keo vào trong mép bóng (đơn vị local) để không lòi ra ngoài viền. " +
+                 "Dòng khí vẫn phun từ đúng mép. Starting value.")]
+        [SerializeField] float markInset = 0.07f;
 
         class Hole
         {
@@ -120,7 +126,8 @@ namespace PopJet
             h.root.localRotation = Quaternion.FromToRotation(Vector3.up, outward); // gốc bóng không xoay
 
             h.mark = NewSprite("Hole", h.root, holeSprite, holeColor, sortingOrder);
-            h.mark.transform.localScale = Vector3.one * 0.09f;
+            h.mark.transform.localPosition = new Vector3(0f, -markInset, 0f); // root: +Y = hướng ra ngoài
+            h.mark.transform.localScale = new Vector3(holeSize.x, holeSize.y, 1f);
 
             if (streamPrefab != null)
             {
@@ -151,6 +158,7 @@ namespace PopJet
                 for (int i = 0; i < 2; i++)
                 {
                     var tape = NewSprite("Tape", h.root, tapeSprite != null ? tapeSprite : holeSprite, tapeColor, sortingOrder + 1);
+                    tape.transform.localPosition = new Vector3(0f, -markInset, 0f);
                     tape.transform.localScale = new Vector3(0.24f, 0.07f, 1f);
                     tape.transform.localRotation = Quaternion.Euler(0f, 0f, i == 0 ? 35f : -35f);
                 }

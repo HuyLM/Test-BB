@@ -40,19 +40,21 @@ namespace PopJet
         [Tooltip("Tỉ lệ scale khi hết khí (bóng xẹp dần).")]
         [SerializeField, Range(0.2f, 1f)] float minScale = 0.55f;
         [Tooltip("Hệ số lực khi khí gần cạn (1 = không giảm).")]
-        [SerializeField, Range(0.2f, 1f)] float minThrustWhenLow = 0.6f;
+        [SerializeField, Range(0.2f, 1f)] float minThrustWhenLow = 0.75f; // dễ hơn: cú chọc cuối không yếu hẳn (cũ 0.6)
 
         [Header("Player vent (starting values)")]
-        [SerializeField] float ventThrust = 6f;
-        [SerializeField] float ventDuration = 1.5f;
+        // Vent lâu hơn, êm hơn (cũ 6 / 1.5): giữ nguyên xung lực thrust*duration/2 = 4.5 nên quãng bay mỗi cú
+        // chọc vẫn ~3 đơn vị như bố cục 20 màn; chỉ tốc độ đỉnh thấp hơn và khí phun kéo dài hơn.
+        [SerializeField] float ventThrust = 4f;
+        [SerializeField] float ventDuration = 2.25f;
         [Tooltip("Tổng khí mất cho mỗi lần chọc (0..1).")]
-        [SerializeField, Range(0.01f, 0.5f)] float ventAirCost = 0.18f;
+        [SerializeField, Range(0.01f, 0.5f)] float ventAirCost = 0.12f; // dễ hơn: ~8 cú chọc mỗi bình (cũ 0.18 ≈ 5.5)
 
         [Header("Leak from spikes (starting values)")]
         [SerializeField] float leakThrust = 1.8f;
         [SerializeField] float leakDuration = 3f;
         [Tooltip("Tổng khí mất cho mỗi lỗ rò (0..1).")]
-        [SerializeField, Range(0.005f, 0.3f)] float leakAirCost = 0.06f;
+        [SerializeField, Range(0.005f, 0.3f)] float leakAirCost = 0.04f; // giảm cùng tỉ lệ với ventAirCost (cũ 0.06)
         [Tooltip("Thời gian tối thiểu giữa 2 lỗ rò, chống spam khi trượt dọc thanh gai.")]
         [SerializeField] float leakCooldown = 0.5f;
         [SerializeField] int maxLeaks = 4;

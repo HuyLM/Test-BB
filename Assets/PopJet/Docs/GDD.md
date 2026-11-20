@@ -372,7 +372,7 @@ Mọi số trong bảng là giá trị khởi điểm.
 | 6b | Nhiều công tắc | Cửa chỉ mở khi mọi công tắc đều đã bấm | Lập lộ trình | 4 | Không | `DoorLogic` (AND) |
 | 6c | Nút nặng | Chỉ mở khi bóng đang mang tạ | Đi lấy tạ trước | 4 | Không | `ButtonSwitch` + điều kiện |
 | 7 | Chìa và ổ khóa | Mang chìa trên dây tới ổ | Lộ trình hai chặng, bóng nặng hơn khi mang | 4 | Chìa +0.3 khối lượng | `KeyPickup`, `Lock` |
-| 8 | Trạm bơm | Ở trong vùng thì khí hồi dần | Dừng lại bơm, tốn thời gian khi có vật động | Từ 2 | 0.25 khí/giây, mỗi trạm hồi tối đa 0.5 | `PumpStation` |
+| 8 | Trạm bơm (gắn tường, đã làm 2026-11-19) | Ở trong vùng thì khí hồi dần; khi không chọc, trạm kéo nhẹ bóng về tâm vùng | Dừng lại bơm, tốn thời gian khi có vật động | Từ 1 (đưa lên sớm vì keo vá không còn hồi khí): 1-19, 1-20 | 0.25 khí/giây, mỗi trạm hồi tối đa 0.5 | `PumpStation` |
 | 9 | Cột mốc (checkpoint) | Chạm vào thì lưu vị trí và lượng khí; thua thì về đây | Màn dài đỡ nản | Màn trùm | Không | `Checkpoint` |
 | 10 | Ống hơi | Chui vào đầu này, chạy theo đường, ra đầu kia với vận tốc định sẵn | Đi tắt miễn phí | 3 | Tốc độ ra 4 | `Tube` (đi theo waypoint) |
 | 11 | Cổng dịch chuyển | Vào A ra B, giữ độ lớn vận tốc, xoay theo hướng cổng ra | Puzzle về hướng | 4, 6 | Hồi chiêu 0.3 giây để khỏi lặp vô tận | `Portal` |
@@ -390,7 +390,7 @@ Mọi số trong bảng là giá trị khởi điểm.
 
 | Item | Hiệu ứng | Lý do tồn tại | Khởi điểm | Code |
 |---|---|---|---|---|
-| Băng keo vá (có sẵn) | Vá mọi lỗ rò và hồi khí | Cứu vãn sau khi dính gai | Hồi 0.3 | `PatchPickup` |
+| Băng keo vá (có sẵn) | Vá mọi lỗ rò, **không** hồi khí (đổi 2026-11-19: keo chỉ vá, bơm khí là việc của trạm bơm) | Cứu vãn sau khi dính gai | Hồi 0 | `PatchPickup` |
 | Bình khí nhỏ | Cộng khí, không vá lỗ | Phần thưởng cho đường vòng | +0.18 (đúng 1 cú chọc) | `AirPickup` |
 | Sao | Mục tiêu ★ thứ hai | Rủi ro đổi phần thưởng | 1 cái mỗi màn | `StarPickup` |
 | Xu | Tiền, đồng thời là "vệt bánh mì" gợi ý đường đi | Motivation và Clarity | 5–15 xu mỗi màn, chỉ tính lần nhặt đầu tiên | `CoinPickup` |
