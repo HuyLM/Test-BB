@@ -18,5 +18,14 @@ MonoBehaviour:
   prefab: {fileID: 6144471652457988504, guid: fed97a94c27fe4e4b917aaf41b12be16, type: 3}
   par: 3
   hint: Fire pops you instantly!
+  tutorial: 0
   notes: "Nh\xF3m D l\u1EA7n \u0111\u1EA7u (\xA75.1): ba c\xE2y n\u1EBFn tr\xEAn
     b\xE1nh. L\u1EEDa n\u1ED5 ngay. V\xF2ng qua hai b\xEAn. Par t\u1EA1m."
+  solution:
+    sampleInterval: 0.05
+    fixedDeltaTime: 0.02
+    path: []
+    steps: []
+    pokes: 0
+    totalTicks: 0
+    recordedAt: 

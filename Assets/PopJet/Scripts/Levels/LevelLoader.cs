@@ -32,6 +32,8 @@ namespace PopJet
         public LevelRoot Root { get; private set; }
         public int Index => currentIndex;
         public bool HasNext => catalog != null && currentIndex + 1 < catalog.Count;
+        /// <summary>true = lượt này bắt đầu từ cột mốc (thua sau khi chạm cột mốc), không từ điểm xuất phát.</summary>
+        public bool StartedFromCheckpoint { get; private set; }
 
         void Awake()
         {
@@ -54,7 +56,15 @@ namespace PopJet
             }
             Root = Instantiate(Level.Prefab);
             Root.name = Level.Prefab.name;
-            PlaceBalloon(Root.SpawnPoint.position);
+            // Đã chạm cột mốc trong lượt này rồi thua: chơi lại từ cột mốc (GDD §6 #9).
+            StartedFromCheckpoint = CheckpointState.IsFor(currentIndex);
+            PlaceBalloon(StartedFromCheckpoint ? (Vector3)CheckpointState.Position : Root.SpawnPoint.position);
+        }
+
+        void Start()
+        {
+            // Sau Awake của bóng (bóng đã đặt khí đầy): trả lại khí và số cú chọc lúc chạm cột mốc.
+            if (StartedFromCheckpoint && balloon != null) balloon.RestoreRun(CheckpointState.Air, CheckpointState.Pokes);
         }
 
         void OnDestroy()
@@ -79,11 +89,12 @@ namespace PopJet
             }
         }
 
-        /// <summary>Mở màn theo thứ tự trong catalog (load lại scene gameplay).</summary>
+        /// <summary>Mở màn theo thứ tự trong catalog (load lại scene gameplay). Luôn bắt đầu từ đầu màn.</summary>
         public void LoadLevel(int index)
         {
             if (catalog == null || catalog.Count == 0) return;
             currentIndex = Mathf.Clamp(index, 0, catalog.Count - 1);
+            CheckpointState.Clear();
             TimeController.ResetAll();
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         }

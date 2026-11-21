@@ -18,5 +18,16 @@ MonoBehaviour:
   prefab: {fileID: 6936718508379453086, guid: 9c036ccbceafeb24f8bc1b4b44a47edb, type: 3}
   par: 1
   hint: Hold the balloon, drag, release
+  tutorial: 1
   notes: "Gi\u1EDBi thi\u1EC7u (\xA78.4): \u0111\xEDch ngay ph\xEDa tr\xEAn. L\u1EDDi
-    gi\u1EA3i: k\xE9o kim xu\u1ED1ng d\u01B0\u1EDBi, th\u1EA3 1 l\u1EA7n."
+    gi\u1EA3i: k\xE9o kim xu\u1ED1ng d\u01B0\u1EDBi, th\u1EA3 1 l\u1EA7n. B\xE0n
+    tay m\u1EDD tr\xEAn b\xF3ng, khi gi\u1EEF th\xEC b\xE0n tay ma k\xE9o xu\u1ED1ng
+    (TutorialCue.DragHand)."
+  solution:
+    sampleInterval: 0.05
+    fixedDeltaTime: 0.02
+    path: []
+    steps: []
+    pokes: 0
+    totalTicks: 0
+    recordedAt: 

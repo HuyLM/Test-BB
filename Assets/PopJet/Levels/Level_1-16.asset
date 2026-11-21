@@ -18,5 +18,14 @@ MonoBehaviour:
   prefab: {fileID: 1203020333562764202, guid: a4cffc42f6cba064a8528a9676274bce, type: 3}
   par: 2
   hint: 
+  tutorial: 0
   notes: "Ph\xE1o gi\u1EA5y + n\u1EBFn: b\u1EAFn qua khe gi\u1EEFa c\xE1c ng\u1ECDn
     n\u1EBFn. Par t\u1EA1m."
+  solution:
+    sampleInterval: 0.05
+    fixedDeltaTime: 0.02
+    path: []
+    steps: []
+    pokes: 0
+    totalTicks: 0
+    recordedAt: 

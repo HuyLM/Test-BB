@@ -18,5 +18,15 @@ MonoBehaviour:
   prefab: {fileID: 7252278566807359249, guid: ad61a9cf9d0fd514c8f33cac8f10b9ad, type: 3}
   par: 3
   hint: Grab the star for a bonus
+  tutorial: 2
   notes: "Sao l\u1EC7ch \u0111\u01B0\u1EDDng: Sao \u1EDF d\u01B0\u1EDBi b\xEAn tr\xE1i,
-    \u0111\xEDch ph\xEDa tr\xEAn k\u1EC7. Par t\u1EA1m."
+    \u0111\xEDch ph\xEDa tr\xEAn k\u1EC7. \xD4 Sao tr\xEAn HUD nh\u1EA5p nh\xE1y
+    (TutorialCue.StarChip). Par t\u1EA1m."
+  solution:
+    sampleInterval: 0.05
+    fixedDeltaTime: 0.02
+    path: []
+    steps: []
+    pokes: 0
+    totalTicks: 0
+    recordedAt: 

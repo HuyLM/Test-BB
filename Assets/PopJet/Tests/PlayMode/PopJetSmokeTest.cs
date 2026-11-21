@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
@@ -53,13 +54,101 @@ public class PopJetSmokeTest
         Save("UseFile", SavePath);
         // Tắt camera giới thiệu đầu màn: nó dừng thế giới nên WaitForSeconds sẽ không bao giờ xong.
         RuntimeType("GameFlow").GetField("IntroEnabled").SetValue(null, false);
+        RuntimeType("GameFlow").GetMethod("ClearFails").Invoke(null, null);
+        RuntimeType("CheckpointState").GetMethod("Clear").Invoke(null, null);
+        // Designer có thể đang bật ghi lời giải: test không được ghi vào LevelDefinition.
+        RecorderType.GetField("SuppressSaving").SetValue(null, true);
+        RecorderType.GetField("ReplayOnNextLoad").SetValue(null, null);
+        // Chuyển màn bằng bóng nổ làm đổi màn chậm 0.3 giây: tắt, test riêng bật lại.
+        RuntimeType("ScreenTransition").GetField("Enabled").SetValue(null, false);
     }
 
     [TearDown]
     public void RestoreFlow()
     {
+        Time.captureDeltaTime = 0f;
         RuntimeType("GameFlow").GetField("IntroEnabled").SetValue(null, true);
+        RuntimeType("GameFlow").GetMethod("ClearFails").Invoke(null, null);
+        RuntimeType("CheckpointState").GetMethod("Clear").Invoke(null, null);
+        RecorderType.GetField("SuppressSaving").SetValue(null, false);
+        RecorderType.GetField("ReplayOnNextLoad").SetValue(null, null);
         RuntimeType("TimeController").GetMethod("ResetAll").Invoke(null, null);
+    }
+
+    static System.Type RecorderType => RuntimeType("SolutionRecorder");
+
+    // ===================================================================== Task 4–6: chỉ báo đích, giảm chuyển động, UI, âm thanh
+
+    [UnityTest]
+    public IEnumerator Polish_GoalArrowReduceMotionUiAndAudio()
+    {
+        SceneManager.LoadScene(0);
+        yield return null;
+        yield return null;
+        // Chỉ báo đích: 1-1 đích trong khung thì ẩn; 1-20 đích ở tận trên thì hiện, chĩa lên.
+        Call(Comp("LevelLoader", "LevelLoader"), "LoadLevel", 0);
+        yield return null; yield return null; yield return null;
+        Assert.IsFalse((bool)Get(Comp("HUD", "GoalIndicator"), "IsShown"), "1-1: đích trong khung thì không có mũi tên");
+        Call(Comp("LevelLoader", "LevelLoader"), "LoadLevel", 19);
+        yield return null; yield return null; yield return null;
+        Assert.IsTrue((bool)Get(Comp("HUD", "GoalIndicator"), "IsShown"), "1-20: đích ngoài màn hình thì có mũi tên");
+        var arrow = GameObject.Find("HUD/SafeArea/GoalArrow").transform;
+        Assert.Greater(((RectTransform)arrow).anchoredPosition.y, 50f, "Mũi tên ở nửa trên, chĩa lên");
+
+        // Giảm chuyển động: nổ không rung camera, không chớp sáng.
+        RuntimeType("GameSettings").GetMethod("SetReduceMotion").Invoke(null, new object[] { true });
+        var balloon = Comp("Balloon", "BalloonController");
+        var reasonType = balloon.GetType().Assembly.GetType("PopJet.FailReason");
+        var music = Comp("Music", "TimeFreezeAudio");
+        Call(balloon, "Pop", System.Enum.Parse(reasonType, "Burned"));
+        yield return null;
+        Assert.AreEqual(0, Get(Comp("Balloon", "BalloonFeedback"), "ShakeCount"), "Giảm chuyển động: không rung camera");
+        Assert.IsNull(GameObject.Find("PopBurst(Clone)/Flash"), "Giảm chuyển động: không chớp sáng");
+        Assert.IsTrue((bool)Get(music, "IsDucked"), "Nổ thì nhạc nhỏ đi");
+        RuntimeType("GameSettings").GetMethod("SetReduceMotion").Invoke(null, new object[] { false });
+        yield return new WaitForSeconds(1.6f);
+
+        // Popup xì hơi khi đóng; nút UI kêu.
+        var audio = Comp("GameAudio", "GameAudio");
+        Call(Screens, "Pause");
+        yield return null;
+        Call(Screens, "Resume");
+        Assert.AreEqual(1f, Time.timeScale);
+        Assert.IsTrue(GameObject.Find("HUD/Screens/Pause").activeSelf, "Đang xì hơi: chưa tắt ngay");
+        yield return new WaitForSecondsRealtime(0.6f);
+        Assert.IsFalse(GameObject.Find("HUD/Screens/Pause").activeSelf, "Xì hơi xong thì tắt");
+
+        // Kết quả: 3 nốt Đô Mi Son.
+        Call(Comp("LevelLoader", "LevelLoader"), "LoadLevel", 0);
+        yield return null; yield return null;
+        Call(Comp("Balloon", "BalloonController"), "ReachGoal");
+        yield return new WaitForSecondsRealtime(1.8f);
+        Assert.AreEqual(3, Get(Comp("GameAudio", "GameAudio"), "NoteCount"), "3 sao phồng, 3 nốt");
+
+        // Chuyển màn bằng bóng nổ: Next phủ màn hình rồi mới đổi màn.
+        RuntimeType("ScreenTransition").GetField("Enabled").SetValue(null, true);
+        Call(Screens, "Next");
+        yield return null;
+        Assert.IsTrue((bool)RuntimeType("ScreenTransition").GetProperty("IsRunning").GetValue(null));
+        Assert.IsNotNull(GameObject.Find("Level_1-1"), "Chưa đổi màn khi bóng đang phình");
+        yield return new WaitForSecondsRealtime(1.2f);
+        Assert.IsNotNull(GameObject.Find("Level_1-2"), "Bóng nổ xong thì đã sang màn mới");
+        Assert.IsFalse((bool)RuntimeType("ScreenTransition").GetProperty("IsRunning").GetValue(null));
+        RuntimeType("ScreenTransition").GetField("Enabled").SetValue(null, false);
+
+        // Trang chủ: bóng chọc thử.
+        RuntimeType("GameFlow").GetMethod("RequestHome").Invoke(null, null);
+        SceneManager.LoadScene(0);
+        yield return null; yield return null;
+        var pop = Comp("HUD/Screens/Home/Balloon", "HomeBalloon");
+        Vector2 p0 = ((RectTransform)pop.transform).anchoredPosition;
+        Call(pop, "Poke", new Vector2(0f, -50f));
+        yield return new WaitForSecondsRealtime(0.15f);
+        Assert.Greater(((RectTransform)pop.transform).anchoredPosition.y, p0.y + 20f, "Chọc dưới đáy thì bóng vọt lên");
+
+        Call(Comp("LevelLoader", "LevelLoader"), "LoadLevel", 0);
+        yield return null;
+        yield return null;
     }
 
     static object NewResult(string id, bool star, bool underPar, bool crown)
@@ -142,7 +231,7 @@ public class PopJetSmokeTest
         var balloon = Comp("Balloon", "BalloonController");
         var input = Comp("Input", "BalloonInput");
         Assert.IsNotNull(GameObject.Find("HUD/SafeArea/RetryButton"), "HUD");
-        Assert.IsNotNull(balloon.transform.Find("Visual/Face/EyeL"), "Mặt bóng");
+        Assert.IsNotNull(balloon.transform.Find("Visual/Face"), "Mặt bóng");
         Assert.IsNotNull(balloon.transform.Find("String"), "Dây bóng");
         Assert.AreEqual(60, Application.targetFrameRate, "60 fps");
         Assert.IsNotNull(GameObject.Find("Level_1-1"), "LevelLoader phải tạo prefab màn đầu tiên");
@@ -470,6 +559,394 @@ public class PopJetSmokeTest
         Call(Comp("Balloon", "BalloonController"), "TryVent", Vector2.up);
         yield return new WaitForSeconds(0.5f);
         Assert.Greater(vacuum.position.y, y0 + 0.1f, "Chọc rồi thì máy hút đuổi theo");
+
+        Call(Comp("LevelLoader", "LevelLoader"), "LoadLevel", 0);
+        yield return null;
+        yield return null;
+    }
+
+    // ===================================================================== Lời giải, Gợi ý (GDD §8.3 điều 5, §15.7, §3.5)
+
+    /// <summary>Một thao tác kịch bản: chọc theo hướng, hoặc bắn pháo giấy (chờ tới khi pháo đang giữ bóng).</summary>
+    struct ScriptedStep
+    {
+        public int tick;
+        public Vector2 dir;
+        public bool fire;
+    }
+
+    static ScriptedStep Poke(int tick, float x, float y) => new ScriptedStep { tick = tick, dir = new Vector2(x, y).normalized };
+    static ScriptedStep FireCannon(int tick) => new ScriptedStep { tick = tick, fire = true };
+
+    static Component HeldLauncher()
+    {
+        foreach (var o in Object.FindObjectsByType(RuntimeType("Launcher"), FindObjectsSortMode.None))
+        {
+            var l = (Component)o;
+            if ((bool)Get(l, "HasBalloon")) return l;
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Chơi màn theo kịch bản, gọi từ coroutine (ngoài bước vật lý) như input thật, tới khi đủ ticks bước vật lý
+    /// hoặc lượt kết thúc. Lượt SolutionRecorder đã ghi được thêm vào result.
+    /// </summary>
+    static IEnumerator PlayScripted(int level, ScriptedStep[] script, int ticks, List<object> result)
+    {
+        Call(Comp("LevelLoader", "LevelLoader"), "LoadLevel", level);
+        yield return null;
+        yield return null;
+        var rec = Comp("SolutionRecorder", "SolutionRecorder");
+        var balloon = Comp("Balloon", "BalloonController");
+        int next = 0;
+        while ((int)Get(rec, "CompletedTicks") < ticks && !(bool)Get(rec, "RunFinished"))
+        {
+            int t = (int)Get(rec, "CompletedTicks");
+            while (next < script.Length && script[next].tick <= t)
+            {
+                var s = script[next];
+                if (s.fire)
+                {
+                    var l = HeldLauncher();
+                    if (l == null) break; // chờ bóng vào pháo
+                    Call(l, "Fire");
+                }
+                else Call(balloon, "TryVent", s.dir);
+                next++;
+            }
+            yield return null;
+        }
+        Assert.AreEqual(script.Length, next, $"Màn số {level + 1}: kịch bản phải chạy hết thao tác");
+        result.Add(Get(rec, "Run"));
+    }
+
+    /// <summary>Phát lại lời giải từ bước vật lý đầu tiên tới khi đủ ticks hoặc lượt kết thúc.</summary>
+    static IEnumerator Replay(int level, object solution, int ticks, List<object> result)
+    {
+        RecorderType.GetField("ReplayOnNextLoad").SetValue(null, solution);
+        Call(Comp("LevelLoader", "LevelLoader"), "LoadLevel", level);
+        yield return null;
+        yield return null;
+        var rec = Comp("SolutionRecorder", "SolutionRecorder");
+        Assert.IsTrue((bool)Get(rec, "IsReplaying"));
+        while ((int)Get(rec, "CompletedTicks") < ticks && !(bool)Get(rec, "RunFinished")) yield return null;
+        Assert.IsNull(Get(rec, "ReplayError"), "Phát lại không được lỗi");
+        result.Add(Get(rec, "Run"));
+    }
+
+    static void AssertSameRun(object live, object replay, string id)
+    {
+        var sa = (IList)Field(live, "steps");
+        var sb = (IList)Field(replay, "steps");
+        Assert.AreEqual(sa.Count, sb.Count, id + ": số thao tác khi phát lại phải bằng lúc ghi");
+        for (int i = 0; i < sa.Count; i++)
+            Assert.AreEqual(Field(sa[i], "tick"), Field(sb[i], "tick"), $"{id}: thao tác {i} phải ở cùng bước vật lý");
+        var a = (IList)Field(live, "path");
+        var b = (IList)Field(replay, "path");
+        Assert.Greater(a.Count, 40, id + ": lượt ghi quá ngắn");
+        Assert.LessOrEqual(Mathf.Abs(a.Count - b.Count), 2, id + ": độ dài đường bay");
+        int n = Mathf.Min(a.Count, b.Count);
+        float worst = 0f;
+        for (int i = 0; i < n; i++) worst = Mathf.Max(worst, ((Vector3)a[i] - (Vector3)b[i]).magnitude);
+        Debug.Log($"[PopJet] {id}: {sa.Count} thao tác, {n} mẫu, phát lại lệch tối đa {worst:G3} đơn vị");
+        Assert.Less(worst, 1e-4f, $"{id}: phát lại lệch tối đa {worst} đơn vị so với lúc ghi");
+    }
+
+    [UnityTest]
+    public IEnumerator Solutions_ReplayMatchesRecordedRunExactly()
+    {
+        // Mỗi khung hình đúng một bước vật lý: chạy nhanh hơn thời gian thật, kết quả vật lý không đổi.
+        Time.captureDeltaTime = Time.fixedDeltaTime;
+        SceneManager.LoadScene(0);
+        yield return null;
+        yield return null;
+
+        var cases = new (int level, string id, ScriptedStep[] script, int ticks, bool launch)[]
+        {
+            // Quạt + gai di chuyển cắt ngang cột gió (lỗ rò, cooldown) + keo vá.
+            (12, "1-13", new[] { Poke(10, -1f, 0f), Poke(160, 0.3f, 1f), Poke(300, 1f, 0.6f) }, 450, false),
+            // Chọc lên chui vào pháo giấy, bắn khi nòng đang quét.
+            (10, "1-11", new[] { Poke(5, 0f, 1f), FireCannon(110) }, 360, true),
+            // Bay về phía mèo ngủ: mèo dậy và vồ trong FixedUpdate.
+            (17, "1-18", new[] { Poke(5, -1f, 1f), Poke(110, -1f, 1f), Poke(200, -0.4f, 1f) }, 420, false),
+        };
+        foreach (var c in cases)
+        {
+            var live = new List<object>();
+            var again = new List<object>();
+            yield return PlayScripted(c.level, c.script, c.ticks, live);
+            if (c.launch)
+            {
+                bool launched = false;
+                foreach (var s in (IList)Field(live[0], "steps")) launched |= Field(s, "kind").ToString() == "Launch";
+                Assert.IsTrue(launched, c.id + ": lượt ghi phải có cú bắn pháo giấy");
+            }
+            yield return Replay(c.level, live[0], c.ticks, again);
+            AssertSameRun(live[0], again[0], c.id);
+        }
+
+        Call(Comp("LevelLoader", "LevelLoader"), "LoadLevel", 0);
+        yield return null;
+        yield return null;
+    }
+
+    [UnityTest]
+    public IEnumerator Solutions_RecordedLevelsStillReachGoal()
+    {
+        Time.captureDeltaTime = Time.fixedDeltaTime;
+        SceneManager.LoadScene(0);
+        yield return null;
+        yield return null;
+        var catalog = Get(Comp("LevelLoader", "LevelLoader"), "Catalog");
+        int count = (int)Prop(catalog, "Count");
+        var item = catalog.GetType().GetProperty("Item");
+        var missing = new List<string>();
+        var broken = new List<string>();
+        int ok = 0;
+        for (int i = 0; i < count; i++)
+        {
+            var def = item.GetValue(catalog, new object[] { i });
+            string id = (string)Prop(def, "Id");
+            if (!(bool)Prop(def, "HasSolution")) { missing.Add(id); continue; }
+            var solution = Prop(def, "Solution");
+            int limit = (int)Field(solution, "totalTicks") + 250;
+            RecorderType.GetField("ReplayOnNextLoad").SetValue(null, solution);
+            Call(Comp("LevelLoader", "LevelLoader"), "LoadLevel", i);
+            yield return null;
+            yield return null;
+            var rec = Comp("SolutionRecorder", "SolutionRecorder");
+            var balloon = Comp("Balloon", "BalloonController");
+            while (!(bool)Get(rec, "RunFinished") && (int)Get(rec, "CompletedTicks") < limit) yield return null;
+            string state = Get(balloon, "State").ToString();
+            if (state == "Goal") { ok++; continue; }
+            broken.Add($"{id}: {state} ({Get(balloon, "LastFailReason")}) ở bước {Get(rec, "CompletedTicks")}" +
+                       (Get(rec, "ReplayError") is string err ? ", " + err : ""));
+        }
+        Debug.Log($"[PopJet] Phát lại lời giải: {ok} màn về đích; {missing.Count} màn chưa có lời giải" +
+                  (missing.Count > 0 ? " (" + string.Join(", ", missing) + ")" : ""));
+        Assert.IsEmpty(broken, "Lời giải đã ghi không còn về đích:\n" + string.Join("\n", broken));
+
+        Call(Comp("LevelLoader", "LevelLoader"), "LoadLevel", 0);
+        yield return null;
+        yield return null;
+    }
+
+    static bool HintButtonShown()
+    {
+        var b = (Component)Field(Screens, "hintButton");
+        return b.gameObject.activeSelf;
+    }
+
+    [UnityTest]
+    public IEnumerator Hint_InvitesAfterThreeFailsAndGhostPlays()
+    {
+        SceneManager.LoadScene(0);
+        yield return null;
+        yield return null;
+        Call(Comp("LevelLoader", "LevelLoader"), "LoadLevel", 0); // 1-1
+        yield return null;
+        yield return null;
+
+        // Ghi một lượt thật: chọc thẳng lên tới đích.
+        var balloon = Comp("Balloon", "BalloonController");
+        var rec = Comp("SolutionRecorder", "SolutionRecorder");
+        yield return new WaitForSeconds(0.1f);
+        Assert.IsTrue((bool)Call(balloon, "TryVent", Vector2.up));
+        float until = Time.time + 4f;
+        while (Get(balloon, "State").ToString() != "Goal" && Time.time < until) yield return null;
+        Assert.AreEqual("Goal", Get(balloon, "State").ToString(), "1-1: chọc thẳng lên phải về đích");
+        var run = Get(rec, "Run");
+        Assert.AreEqual(1, Field(run, "pokes"));
+        Assert.IsTrue((bool)Prop(run, "IsValid"));
+        Assert.Greater(((IList)Field(run, "path")).Count, 10, "Đường bay mỗi 0.05 giây");
+
+        // Gán tạm lời giải vừa ghi vào LevelDefinition trong bộ nhớ (không lưu asset), trả lại ở finally.
+        var def = Get(Comp("LevelLoader", "LevelLoader"), "Level");
+        var solutionField = def.GetType().GetField("solution", All);
+        var original = solutionField.GetValue(def);
+        solutionField.SetValue(def, run);
+        try
+        {
+            // Lời giải vừa ghi phát lại phải về đích (đường đi của test Solutions_RecordedLevelsStillReachGoal).
+            RecorderType.GetField("ReplayOnNextLoad").SetValue(null, run);
+            Call(Comp("LevelLoader", "LevelLoader"), "LoadLevel", 0);
+            yield return null;
+            yield return null;
+            until = Time.time + 4f;
+            while (Get(Comp("Balloon", "BalloonController"), "State").ToString() != "Goal" && Time.time < until) yield return null;
+            Assert.AreEqual("Goal", Get(Comp("Balloon", "BalloonController"), "State").ToString(), "Phát lại lời giải phải về đích");
+            Assert.IsNull(Get(Comp("SolutionRecorder", "SolutionRecorder"), "ReplayError"));
+
+            Call(Comp("LevelLoader", "LevelLoader"), "LoadLevel", 0);
+            yield return null;
+            yield return null;
+            var reasonType = balloon.GetType().Assembly.GetType("PopJet.FailReason");
+            for (int k = 0; k < 3; k++)
+            {
+                Assert.IsFalse(HintButtonShown(), $"Mới thua {k} lần: chưa có nút Gợi ý");
+                Call(Comp("Balloon", "BalloonController"), "Pop", System.Enum.Parse(reasonType, "OutOfAir"));
+                yield return new WaitForSeconds(1.7f); // tự chơi lại
+            }
+            Assert.IsTrue(HintButtonShown(), "Thua 3 lần cùng màn thì mời xem Gợi ý");
+            Assert.IsNotNull(GameObject.Find("HUD/SafeArea/HintInvite"), "Dòng mời xem Gợi ý");
+
+            Call(Screens, "PlayHint");
+            yield return null;
+            Assert.IsTrue((bool)Get(Screens, "IsHintPlaying"));
+            Assert.AreEqual(0f, Time.timeScale, "Xem Gợi ý thì thế giới dừng");
+            yield return new WaitForSecondsRealtime(0.3f);
+            Assert.IsTrue(GameObject.Find("HintGhost/GhostBody").GetComponent<SpriteRenderer>().enabled, "Bóng ma hiện");
+            float limit = Time.realtimeSinceStartup + 10f;
+            while ((bool)Get(Screens, "IsHintPlaying") && Time.realtimeSinceStartup < limit) yield return null;
+            Assert.IsFalse((bool)Get(Screens, "IsHintPlaying"), "Bóng ma diễn xong");
+            Assert.AreEqual(1f, Time.timeScale, "Xem xong thì thế giới chạy lại");
+            Assert.AreEqual(0, Get(Comp("Balloon", "BalloonController"), "PokeCount"), "Gợi ý không chọc hộ");
+        }
+        finally
+        {
+            solutionField.SetValue(def, original);
+        }
+
+        Call(Comp("LevelLoader", "LevelLoader"), "LoadLevel", 0);
+        yield return null;
+        yield return null;
+    }
+
+    // ===================================================================== Tutorial bằng hình (GDD §8.4)
+
+    [UnityTest]
+    public IEnumerator Tutorial_VisualCuesOnFirstLevels()
+    {
+        SceneManager.LoadScene(0);
+        yield return null;
+        yield return null;
+        Call(Comp("LevelLoader", "LevelLoader"), "LoadLevel", 0); // 1-1
+        yield return null;
+        yield return null;
+        yield return null;
+
+        // 1-1: bàn tay mờ trên bóng tới cú chọc đầu.
+        var hand = GameObject.Find("TutorialCoach/Hand").GetComponent<SpriteRenderer>();
+        Assert.IsTrue(hand.enabled, "1-1: bàn tay mờ trên bóng");
+        Call(Comp("Balloon", "BalloonController"), "TryVent", Vector2.right);
+        yield return null;
+        Assert.IsFalse(hand.enabled, "Chọc rồi thì bàn tay biến mất");
+
+        // Mọi màn: đã kéo kim ra rồi đưa ngón tay về vùng hủy thì nhắc cách hủy, hủy được một lần thì thôi nhắc.
+        var input = Comp("Input", "BalloonInput");
+        ((Behaviour)input).enabled = false; // batchmode không có ngón tay giữ màn hình
+        SetField(input, "aiming", true);
+        SetField(input, "cancelNow", true);
+        SetField(input, "hadDirection", true);
+        yield return null;
+        Assert.AreEqual("Release in the middle to cancel", LabelText("HUD/SafeArea/CancelTip"));
+        Call(input, "EndAim", false, true);
+        var tutorial = Field(SaveType.GetProperty("Data").GetValue(null), "tutorial");
+        Assert.IsTrue((bool)Field(tutorial, "cancelLearned"), "Hủy được một lần thì thôi nhắc");
+        ((Behaviour)input).enabled = true;
+
+        // 1-6: ô Sao trên HUD nhấp nháy.
+        Call(Comp("LevelLoader", "LevelLoader"), "LoadLevel", 5);
+        yield return null;
+        yield return null;
+        yield return null;
+        var chip = GameObject.Find("HUD/SafeArea/StarChip").transform;
+        float s1 = chip.localScale.x;
+        yield return new WaitForSecondsRealtime(0.2f);
+        Assert.AreNotEqual(s1, chip.localScale.x, "1-6: ô Sao phải nhấp nháy");
+
+        // 1-7: lá giấy trôi trong gió quạt.
+        Call(Comp("LevelLoader", "LevelLoader"), "LoadLevel", 6);
+        yield return null;
+        yield return null;
+        var leaf = GameObject.Find("Level_1-7/Fan/Leaf_0");
+        Assert.IsNotNull(leaf, "1-7: lá giấy trong vùng gió");
+        Vector3 p1 = leaf.transform.localPosition;
+        yield return new WaitForSeconds(0.2f);
+        Assert.AreNotEqual(p1, leaf.transform.localPosition, "Lá trôi theo gió");
+
+        // 1-8: dây nối nút với cửa, bấm nút thì dây sáng.
+        Call(Comp("LevelLoader", "LevelLoader"), "LoadLevel", 7);
+        yield return null;
+        yield return null;
+        var wire = Comp("Level_1-8/Wire", "SwitchWire");
+        Assert.IsFalse((bool)Get(wire, "IsLit"));
+        Comp("Balloon", "BalloonController").GetComponent<Rigidbody2D>().position = GameObject.Find("Level_1-8/Button").transform.position;
+        yield return new WaitForFixedUpdate();
+        yield return new WaitForFixedUpdate();
+        yield return null;
+        Assert.IsTrue((bool)Get(wire, "IsLit"), "Bấm nút thì dây sáng");
+
+        // 1-9: phần Par trên HUD sáng lên, có dòng giải thích Par.
+        Call(Comp("LevelLoader", "LevelLoader"), "LoadLevel", 8);
+        yield return null;
+        yield return null;
+        yield return null;
+        int par = (int)Get(Comp("LevelSession", "LevelSession"), "Par");
+        StringAssert.Contains($"<color=#FFD23F>Par {par}</color>", LabelText("HUD/SafeArea/PokeLabel"));
+        StringAssert.StartsWith($"Par {par}:", LabelText("HUD/SafeArea/HintLabel"));
+
+        Call(Comp("LevelLoader", "LevelLoader"), "LoadLevel", 0);
+        yield return null;
+        yield return null;
+    }
+
+    // ===================================================================== Cột mốc (GDD §6 #9)
+
+    [UnityTest]
+    public IEnumerator Checkpoint_RespawnsWithSavedAirAndPokes()
+    {
+        SceneManager.LoadScene(0);
+        yield return null;
+        yield return null;
+        Call(Comp("LevelLoader", "LevelLoader"), "LoadLevel", 19); // 1-20
+        yield return null;
+        yield return null;
+
+        var balloon = Comp("Balloon", "BalloonController");
+        float vacuumStart = GameObject.Find("Level_1-20/Vacuum").transform.position.y;
+        Assert.IsTrue((bool)Call(balloon, "TryVent", Vector2.up));
+        var cp = Comp("Level_1-20/Checkpoint", "Checkpoint");
+        Vector2 cpPos = cp.transform.position;
+        SetField(balloon, "air", 0.6f);
+        balloon.GetComponent<Rigidbody2D>().position = cpPos;
+        yield return new WaitForFixedUpdate();
+        yield return new WaitForFixedUpdate();
+        yield return null;
+        Assert.IsTrue((bool)Get(cp, "IsActive"), "Chạm cột mốc thì kích hoạt");
+        Assert.AreEqual("Checkpoint!", LabelText("HUD/SafeArea/FailLabel"));
+        var state = RuntimeType("CheckpointState");
+        float savedAir = (float)state.GetProperty("Air").GetValue(null);
+        Assert.AreEqual(0.6f, savedAir, 0.02f, "Lưu lượng khí lúc chạm cột mốc");
+        Assert.AreEqual(1, state.GetProperty("Pokes").GetValue(null));
+
+        var reasonType = balloon.GetType().Assembly.GetType("PopJet.FailReason");
+        Call(balloon, "Pop", System.Enum.Parse(reasonType, "Burned"));
+        yield return new WaitForSeconds(1.8f); // tự chơi lại
+
+        balloon = Comp("Balloon", "BalloonController");
+        Assert.Less(Vector2.Distance(balloon.transform.position, cpPos), 0.01f, "Thua thì chơi lại từ cột mốc");
+        Assert.AreEqual(savedAir, (float)Get(balloon, "Air01"), 1e-3f, "Khí như lúc chạm cột mốc");
+        Assert.AreEqual(1, Get(balloon, "PokeCount"), "Giữ số cú chọc lúc chạm cột mốc");
+        StringAssert.StartsWith("Pokes 1", LabelText("HUD/SafeArea/PokeLabel"));
+        Assert.IsTrue((bool)Get(Comp("Level_1-20/Checkpoint", "Checkpoint"), "IsActive"), "Cột mốc vẫn sáng");
+        Assert.IsTrue((bool)Get(Comp("LevelSession", "LevelSession"), "StartedFromCheckpoint"));
+        Assert.Greater(GameObject.Find("Level_1-20/Vacuum").transform.position.y, vacuumStart + 7f, "Máy hút được đẩy lên gần cột mốc");
+        Assert.AreEqual("Ready", Get(balloon, "State").ToString(), "Chơi lại từ cột mốc: bóng chờ cú chọc đầu");
+
+        // Tạm dừng có thêm "Restart Level": chơi lại từ đầu màn, bỏ cột mốc.
+        Call(Screens, "Pause");
+        yield return null;
+        Assert.IsNotNull(GameObject.Find("HUD/Screens/Pause/Card/RestartLevel"), "Có cột mốc thì có nút Restart Level");
+        Call(Screens, "RestartLevel");
+        yield return null;
+        yield return null;
+        balloon = Comp("Balloon", "BalloonController");
+        var spawn = GameObject.Find("Level_1-20/Spawn");
+        Assert.Less(Vector2.Distance(balloon.transform.position, spawn.transform.position), 0.01f, "Restart Level về đầu màn");
+        Assert.AreEqual(0, Get(balloon, "PokeCount"));
+        Assert.IsFalse((bool)state.GetMethod("IsFor").Invoke(null, new object[] { 19 }), "Restart Level xóa cột mốc");
 
         Call(Comp("LevelLoader", "LevelLoader"), "LoadLevel", 0);
         yield return null;

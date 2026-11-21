@@ -18,6 +18,15 @@ MonoBehaviour:
   prefab: {fileID: 1489165444723325049, guid: f2bb985179b5cb5498a7ce34277cd795, type: 3}
   par: 4
   hint: 
+  tutorial: 0
   notes: "Ph\u1ED1i tr\u1ED9n: m\xE8o + n\u1EBFn + qu\u1EA1t + tr\u1EA1m b\u01A1m
     t\u01B0\u1EDDng tr\xE1i (thay keo v\xE1: m\xE0n kh\xF4ng c\xF3 gai n\xEAn keo
     v\xF4 d\u1EE5ng). Par t\u1EA1m."
+  solution:
+    sampleInterval: 0.05
+    fixedDeltaTime: 0.02
+    path: []
+    steps: []
+    pokes: 0
+    totalTicks: 0
+    recordedAt: 

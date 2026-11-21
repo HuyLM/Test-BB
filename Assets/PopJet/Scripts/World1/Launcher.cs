@@ -24,10 +24,14 @@ namespace PopJet
         [SerializeField] float armDelay = 0.25f;
 
         BalloonController held;
-        float baseAngle, sweepT, heldFor, lastFire = -99f;
+        float baseAngle, sweepT, heldFor;
+        // Thời gian vật lý (cộng trong FixedUpdate): luật bắt lại bóng không phụ thuộc khung hình,
+        // để lời giải đã ghi phát lại ra y hệt (SolutionRecorder).
+        float simTime, lastFire = -99f;
 
         public bool HasBalloon => held != null;
         public Vector2 Direction => barrel != null ? (Vector2)barrel.up : (Vector2)transform.up;
+        public float LaunchSpeed => launchSpeed;
 
         void Awake()
         {
@@ -35,9 +39,11 @@ namespace PopJet
             if (barrel != null) baseAngle = barrel.eulerAngles.z;
         }
 
+        void FixedUpdate() { simTime += Time.fixedDeltaTime; }
+
         void OnTriggerEnter2D(Collider2D other)
         {
-            if (held != null || Time.time - lastFire < recaptureDelay) return;
+            if (held != null || simTime - lastFire < recaptureDelay) return;
             var b = other.GetComponentInParent<BalloonController>();
             if (b == null || !b.Hold(transform.position)) return;
             held = b;
@@ -62,12 +68,18 @@ namespace PopJet
         }
 
         /// <summary>Bắn bóng đang giữ theo hướng nòng.</summary>
-        public void Fire()
+        public void Fire() { FireVelocity(Direction * launchSpeed); }
+
+        /// <summary>
+        /// Bắn bóng đang giữ với vận tốc cho trước. Phát lại lời giải dùng đúng vận tốc đã ghi, vì nòng xoay theo
+        /// khung hình nên hướng nòng lúc phát lại không trùng từng bit với lúc ghi.
+        /// </summary>
+        public void FireVelocity(Vector2 velocity)
         {
             if (held == null) return;
-            held.Launch(Direction * launchSpeed);
+            held.Launch(velocity);
             held = null;
-            lastFire = Time.time;
+            lastFire = simTime;
             Haptics.Medium();
         }
     }

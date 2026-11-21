@@ -373,7 +373,7 @@ Mọi số trong bảng là giá trị khởi điểm.
 | 6c | Nút nặng | Chỉ mở khi bóng đang mang tạ | Đi lấy tạ trước | 4 | Không | `ButtonSwitch` + điều kiện |
 | 7 | Chìa và ổ khóa | Mang chìa trên dây tới ổ | Lộ trình hai chặng, bóng nặng hơn khi mang | 4 | Chìa +0.3 khối lượng | `KeyPickup`, `Lock` |
 | 8 | Trạm bơm (gắn tường, đã làm 2026-11-19) | Ở trong vùng thì khí hồi dần; khi không chọc, trạm kéo nhẹ bóng về tâm vùng | Dừng lại bơm, tốn thời gian khi có vật động | Từ 1 (đưa lên sớm vì keo vá không còn hồi khí): 1-19, 1-20 | 0.25 khí/giây, mỗi trạm hồi tối đa 0.5 | `PumpStation` |
-| 9 | Cột mốc (checkpoint) | Chạm vào thì lưu vị trí và lượng khí; thua thì về đây | Màn dài đỡ nản | Màn trùm | Không | `Checkpoint` |
+| 9 | Cột mốc (checkpoint, đã làm 2026-11-21) | Chạm vào thì lưu vị trí, lượng khí, số cú chọc, Sao và xu đã nhặt; thua thì về đây. Tạm dừng có "Restart Level" để về đầu màn. Lượt chơi lại từ cột mốc không được Vương miện | Màn dài đỡ nản | Màn trùm (1-20) | Không | `Checkpoint` (đẩy vật đuổi theo lên khi chơi lại) |
 | 10 | Ống hơi | Chui vào đầu này, chạy theo đường, ra đầu kia với vận tốc định sẵn | Đi tắt miễn phí | 3 | Tốc độ ra 4 | `Tube` (đi theo waypoint) |
 | 11 | Cổng dịch chuyển | Vào A ra B, giữ độ lớn vận tốc, xoay theo hướng cổng ra | Puzzle về hướng | 4, 6 | Hồi chiêu 0.3 giây để khỏi lặp vô tận | `Portal` |
 | 12 | Máy thổi bọt xà phòng | Sinh bọt định kỳ | Bay lên an toàn qua vùng gai | 2 | 1 bọt mỗi 4 giây | `BubbleSpawner` |
@@ -1074,9 +1074,10 @@ Cỡ việc là ước lượng thô, giả định 1–2 người làm (§20): 
 | 2.3 Lưu game | `SaveSystem` JSON | Xong (2026-11-19): thành tích, màn gần nhất, xu, cài đặt, file .bak, mở khóa màn |
 | 2.4 HUD đầy đủ + TextMeshPro | Pause, ô mục tiêu, Xem màn, camera giới thiệu, `TimeController` | Xong (2026-11-19). UI dựng bằng code lúc chạy (`GameScreens`, `UiKit`). Font tạm LiberationSans (chưa có Baloo 2/Nunito) |
 | 2.5 Các màn hình | Kết quả, Trang chủ, Bản đồ, Cài đặt | Xong (2026-11-19). Chưa có: ×2 xu bằng quảng cáo, Tủ đồ, Thử thách ngày, chuyển màn bằng bóng nổ, sân chơi Pốp ở Trang chủ |
-| 2.6 Vật mới Thế giới 1 | Xu, gai di chuyển, pháo giấy, gối bông, nến, mèo, máy hút bụi | Xong (2026-11-19). Hình vẫn là placeholder |
-| 2.7 Dựng 20 màn | Tutorial §8.4, Par và lời giải từng màn | Bản nháp (2026-11-19): 20 màn dựng bằng builder, Par và bố cục **chưa playtest**; màn trùm chưa có checkpoint, chưa có bản ghi lời giải cho Gợi ý |
-| 2.8 Analytics + kiểm tra cuối | Sự kiện, build Android, chơi thử máy thật | Chưa |
+| 2.6 Vật mới Thế giới 1 | Xu, gai di chuyển, pháo giấy, gối bông, nến, mèo, máy hút bụi | Xong (2026-11-19). Trạm bơm thêm 2026-11-20. Art AI: bộ thử §9.6 bước 5 (đinh ghim, quạt, keo vá, Sao, nến, trạm bơm, nền phòng) gắn 2026-11-20; bộ 16 ảnh còn lại (bóng, 12 mặt, kim, xu, đích, pháo, gối, mèo ngủ/thức, máy hút bụi, cửa, nút, tường bìa, nền lớp giữa, vân giấy, icon HUD) gắn 2026-11-21. Viền `#2B2B3A` bằng shader chung, Sprite Atlas `Art/World1.spriteatlasv2` |
+| 2.7 Dựng 20 màn | Tutorial §8.4, Par và lời giải từng màn | 20 màn dựng bằng builder, bố cục **chưa playtest**. 2026-11-21: công cụ ghi lời giải (Par = số cú chọc của lời giải, test phát lại kiểm tra màn còn giải được), Gợi ý bằng bóng ma sau 3 lần thua (chưa tính giá), tutorial bằng hình 1-1/1-6/1-7/1-8/1-9 và gợi ý cách hủy, cột mốc cho màn trùm. **Chưa có lời giải nào được ghi**: designer chơi 20 màn với Record Best để có Par thật và Gợi ý |
+| 2.7b Hoàn thiện UI/âm thanh | Chỉ báo đích ngoài màn hình, Reduce Motion, chuyển màn bóng nổ, popup xì hơi, Trang chủ sân chơi, âm thanh §11.2 | Xong (2026-11-21). Font Baloo 2 (tiêu đề) + Nunito (chữ thường) thêm cùng ngày. Chưa có: AudioMixer nhóm, parallax |
+| 2.8 Analytics + kiểm tra cuối | Sự kiện, build Android, chơi thử máy thật | Chưa. Dời xuống cuối Giai đoạn 2 (quyết định 2026-11-21) |
 
 ### 16.2 Nếu thiếu thời gian, cắt theo thứ tự này
 

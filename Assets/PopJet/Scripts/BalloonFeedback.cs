@@ -36,6 +36,9 @@ namespace PopJet
 
         BalloonController balloon;
 
+        /// <summary>Số lần đã gọi onPopped (rung camera) trong scene này; test Giảm chuyển động đọc.</summary>
+        public int ShakeCount { get; private set; }
+
         void Awake()
         {
             balloon = GetComponent<BalloonController>();
@@ -62,7 +65,12 @@ namespace PopJet
 
         void OnVent(Vector2 pos, Vector2 flyDir)
         {
-            PlayRandom(ventClips);
+            // GDD §11.2: pitch tăng dần khi khí giảm (1.0 lúc đầy, 1.3 lúc cạn), nghe cũng biết sắp hết khí.
+            if (source != null && ventClips != null && ventClips.Length > 0)
+            {
+                source.pitch = Mathf.Lerp(1.3f, 1f, balloon.Air01) * Random.Range(0.97f, 1.03f);
+                source.PlayOneShot(ventClips[Random.Range(0, ventClips.Length)]);
+            }
             Spawn(ventPuffPrefab, pos, -flyDir);
         }
 
@@ -92,6 +100,12 @@ namespace PopJet
                 var ps = Instantiate(popBurstPrefab, balloon.Center, Quaternion.identity);
                 var main = ps.main;
                 main.startColor = color;
+                // Giảm chuyển động (GDD §10.7): bỏ chớp sáng khi nổ.
+                if (GameSettings.ReduceMotion)
+                {
+                    var flash = ps.transform.Find("Flash");
+                    if (flash != null) flash.gameObject.SetActive(false);
+                }
                 Destroy(ps.gameObject, 3f);
             }
 
@@ -99,7 +113,12 @@ namespace PopJet
             else PlayOne(emptyClip);
 
             foreach (var r in renderers) r.enabled = false;
-            onPopped?.Invoke();
+            // onPopped nối vào rung camera: Giảm chuyển động thì tắt.
+            if (!GameSettings.ReduceMotion)
+            {
+                ShakeCount++;
+                onPopped?.Invoke();
+            }
         }
         void OnGoal() { PlayOne(goalClip); }
 

@@ -416,8 +416,9 @@ namespace PopJet.EditorTools
         /// <summary>Import TMP Essential Resources nếu chưa có (font SDF mặc định + TMP Settings), trả về font mặc định.</summary>
         static TMP_FontAsset EnsureTmpFont()
         {
+            // TMP Essentials vẫn cần (TMP Settings, shader SDF); chữ trong game dùng Nunito nếu có file TTF.
             var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(TmpFontPath);
-            if (font != null) return font;
+            if (font != null) return BodyFont() ?? font;
             var pkg = UnityEditor.PackageManager.PackageInfo.FindForAssetPath("Packages/com.unity.ugui");
             string unitypackage = pkg != null ? pkg.resolvedPath + "/Package Resources/TMP Essential Resources.unitypackage" : null;
             if (unitypackage == null || !File.Exists(unitypackage))
@@ -429,7 +430,7 @@ namespace PopJet.EditorTools
             AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
             font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(TmpFontPath);
             if (font == null) Debug.LogError("[PopJet] Đã import TMP Essentials nhưng chưa thấy " + TmpFontPath);
-            return font;
+            return BodyFont() ?? font;
         }
     }
 }

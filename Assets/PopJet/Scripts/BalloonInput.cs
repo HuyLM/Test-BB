@@ -92,10 +92,13 @@ namespace PopJet
         public event Action AimStarted;
         /// <summary>Kết thúc ngắm. true = đã chọc thật, false = hủy.</summary>
         public event Action<bool> AimEnded;
+        /// <summary>Người chơi cố ý hủy: đã kéo kim ra rồi thả tay trong vùng hủy (tutorial thôi nhắc cách hủy).</summary>
+        public event Action Canceled;
 
         Camera cam;
         bool aiming;
         bool cancelNow;
+        bool hadDirection;
         Vector2 needleDir = Vector2.up;
         Coroutine stabRoutine;
 
@@ -103,6 +106,8 @@ namespace PopJet
         public bool IsAiming => aiming;
         /// <summary>Đang ngắm và ngón tay ngoài vùng hủy: thả ra bây giờ sẽ chọc.</summary>
         public bool HasAimDirection => aiming && !cancelNow;
+        /// <summary>Đã kéo kim ra rồi đưa ngón tay về vùng hủy: thả ra bây giờ sẽ hủy (GDD §8.4, gợi ý cách hủy).</summary>
+        public bool InCancelZoneAfterAiming => aiming && cancelNow && hadDirection;
         /// <summary>Hướng bóng sẽ bay nếu thả ra bây giờ (ngược hướng kim).</summary>
         public Vector2 FlyDirection => -needleDir;
         /// <summary>Vị trí ngón tay/chuột trong world (cập nhật mỗi frame).</summary>
@@ -138,13 +143,17 @@ namespace PopJet
 
             Vector2 d = world - center;
             cancelNow = d.magnitude < balloon.Radius * cancelFactor;
-            if (!cancelNow) needleDir = d.normalized;
+            if (!cancelNow)
+            {
+                needleDir = d.normalized;
+                hadDirection = true;
+            }
 
             UpdateVisuals(center);
 
             if (PointerHelper.Up)
             {
-                EndAim(!cancelNow);
+                EndAim(!cancelNow, true);
             }
             else if (!PointerHelper.Held)
             {
@@ -156,6 +165,7 @@ namespace PopJet
         {
             aiming = true;
             cancelNow = true;
+            hadDirection = false;
             balloon.SetAiming(true);
             // Cú đâm kim trước đó chưa xong thì kết thúc luôn, tránh nó chạy tiếp sau khi thế giới chạy lại.
             if (stabRoutine != null) { StopCoroutine(stabRoutine); stabRoutine = null; }
@@ -164,7 +174,8 @@ namespace PopJet
             AimStarted?.Invoke();
         }
 
-        void EndAim(bool fire)
+        /// <param name="released">true = người chơi nhấc tay (không phải mất focus hay bóng hết khí giữa chừng).</param>
+        void EndAim(bool fire, bool released = false)
         {
             aiming = false;
             SetWorldFrozen(false); // chạy lại trước khi chọc để lực đẩy áp dụng ngay
@@ -173,6 +184,8 @@ namespace PopJet
 
             bool vented = fire && balloon.TryVent(-needleDir); // bay ngược hướng kim
             AimEnded?.Invoke(vented);
+            if (!fire && released && hadDirection) Canceled?.Invoke();
+            hadDirection = false;
 
             if (vented && needle != null)
             {

@@ -18,7 +18,16 @@ MonoBehaviour:
   prefab: {fileID: 1344648646789558433, guid: c02999f518e910d469153de59e9d0469, type: 3}
   par: 3
   hint: 
+  tutorial: 0
   notes: "C\xFA xoay (\xA78.2): h\xE0nh lang h\u1EB9p c\xF3 gai b\xEAn tr\xE1i. C\u1ED1
     \xFD c\u1ECD gai \u0111\u1EC3 r\xF2 \u0111\u1EA9y l\xEAn r\u1EBB, keo \u1EDF
     \u0111\u1EA7u h\xE0nh lang. Par t\xEDnh c\u1EA3 r\xF2 chi\u1EBFn thu\u1EADt (\xA720).
     Par t\u1EA1m."
+  solution:
+    sampleInterval: 0.05
+    fixedDeltaTime: 0.02
+    path: []
+    steps: []
+    pokes: 0
+    totalTicks: 0
+    recordedAt: 

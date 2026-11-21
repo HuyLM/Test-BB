@@ -17,6 +17,7 @@ namespace PopJet
         static bool coldStart = true;
         static bool homeRequested;
         static int lastIntroIndex = -1;
+        static int failLevelIndex = -1, failCount;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics()
@@ -25,6 +26,28 @@ namespace PopJet
             coldStart = true;
             homeRequested = false;
             lastIntroIndex = -1;
+            ClearFails();
+        }
+
+        /// <summary>Số lần thua liên tiếp ở màn này, giữ qua các lần chơi lại (mời xem Gợi ý, GDD §3.5).</summary>
+        public static int FailCount(int levelIndex) => levelIndex == failLevelIndex ? failCount : 0;
+
+        /// <summary>Bóng vừa nổ hoặc xẹp ở màn levelIndex. Thua ở màn khác thì đếm lại từ đầu.</summary>
+        public static void RegisterFail(int levelIndex)
+        {
+            if (levelIndex != failLevelIndex)
+            {
+                failLevelIndex = levelIndex;
+                failCount = 0;
+            }
+            failCount++;
+        }
+
+        /// <summary>Về đích thì xóa số lần thua.</summary>
+        public static void ClearFails()
+        {
+            failLevelIndex = -1;
+            failCount = 0;
         }
 
         /// <summary>Lần load scene kế tiếp sẽ mở Trang chủ.</summary>
@@ -90,6 +113,9 @@ namespace PopJet
         public static void SetSound(bool on) { SaveSystem.Data.settings.sfxVolume = on ? 1f : 0f; Changed(); }
         public static void SetMusic(bool on) { SaveSystem.Data.settings.musicVolume = on ? 1f : 0f; Changed(); }
         public static void SetReduceMotion(bool on) { SaveSystem.Data.settings.reduceMotion = on; Changed(); }
+
+        /// <summary>Giảm chuyển động (GDD §10.7): tắt rung camera, chớp sáng khi nổ, hiệu ứng chuyển màn bằng bóng nổ.</summary>
+        public static bool ReduceMotion => SaveSystem.Data.settings.reduceMotion;
 
         static void Changed()
         {

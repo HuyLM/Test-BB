@@ -74,6 +74,21 @@ namespace PopJet
             rb.MovePosition(Vector2.Lerp(a, b, d / len));
         }
 
+        /// <summary>
+        /// Nhảy tới quãng đường distance dọc đường ray (không lùi lại). Cột mốc dùng để đẩy vật đuổi theo lên
+        /// khi chơi lại từ cột mốc. Gọi trước bước vật lý đầu tiên (Start).
+        /// </summary>
+        public void SetProgress(float distance)
+        {
+            float len = offset.magnitude;
+            if (len < 1e-4f) return;
+            s = Mathf.Max(s, Mathf.Clamp(distance, 0f, pingPong ? 2f * len : len));
+            float d = pingPong ? Mathf.PingPong(s, len) : Mathf.Min(s, len);
+            Vector2 p = Vector2.Lerp(a, b, d / len);
+            rb.position = p;
+            transform.position = p;
+        }
+
         void OnDrawGizmosSelected()
         {
             Vector3 p = Application.isPlaying ? (Vector3)a : transform.position;

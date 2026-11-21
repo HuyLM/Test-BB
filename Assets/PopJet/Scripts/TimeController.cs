@@ -19,6 +19,8 @@ namespace PopJet
         Intro = 1 << 3,
         /// <summary>Trang chủ, Bản đồ, Cài đặt phủ lên màn chơi.</summary>
         Menu = 1 << 4,
+        /// <summary>Bóng ma Gợi ý đang diễn lời giải (GDD §3.5, §7.2).</summary>
+        Hint = 1 << 5,
     }
 
     /// <summary>

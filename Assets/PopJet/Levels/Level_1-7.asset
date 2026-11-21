@@ -18,7 +18,16 @@ MonoBehaviour:
   prefab: {fileID: 7994913960731897883, guid: deb7e527e6e23af42bd8f6d4bdcff34b, type: 3}
   par: 2
   hint: 
+  tutorial: 0
   notes: "Qu\u1EA1t: c\u1ED9t gi\xF3 b\xEAn tr\xE1i \u0111\u01B0a b\xF3ng l\xEAn
-    mi\u1EC5n ph\xED. L\u1EDDi gi\u1EA3i: ch\u1ECDc sang tr\xE1i v\xE0o gi\xF3, t\u1EDBi
-    \u0111\u1EC9nh ch\u1ECDc v\xE0o \u0111\xEDch. Sao \u1EDF tr\xEAn k\u1EC7 ph\u1EA3i.
-    Par t\u1EA1m."
+    mi\u1EC5n ph\xED, l\xE1 gi\u1EA5y bay theo gi\xF3 (WindLeaves). L\u1EDDi gi\u1EA3i:
+    ch\u1ECDc sang tr\xE1i v\xE0o gi\xF3, t\u1EDBi \u0111\u1EC9nh ch\u1ECDc v\xE0o
+    \u0111\xEDch. Sao \u1EDF tr\xEAn k\u1EC7 ph\u1EA3i. Par t\u1EA1m."
+  solution:
+    sampleInterval: 0.05
+    fixedDeltaTime: 0.02
+    path: []
+    steps: []
+    pokes: 0
+    totalTicks: 0
+    recordedAt: 

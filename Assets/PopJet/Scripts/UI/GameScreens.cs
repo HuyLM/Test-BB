@@ -10,7 +10,11 @@ namespace PopJet
     /// Phần 2.4 + 2.5 của GDD: HUD đầy đủ và mọi màn hình, dựng bằng code lúc chạy (UiKit).
     /// - HUD: nút Tạm dừng (trên trái), ô Sao (sáng khi nhặt), nút Xem màn (dưới trái), dòng gợi ý tutorial,
     ///   bảng 3 mục tiêu đầu màn (§10.3), camera giới thiệu (LevelCameraDirector).
-    /// - Màn hình: Tạm dừng, Kết quả, Trang chủ, Bản đồ, Cài đặt (§10.2, §10.4, §10.5).
+    /// - Gợi ý (§3.5, §7.2): thua cùng một màn hintAfterFails lần thì hiện nút Hint (dưới phải) kèm dòng mời.
+    ///   Bấm thì thế giới dừng (TimeReason.Hint), bóng ma diễn thao tác kế tiếp của lời giải đã ghi. Chưa tính giá
+    ///   (xu, quảng cáo là việc Giai đoạn 3). Màn chưa có lời giải thì không có nút.
+    /// - Màn hình: Tạm dừng, Kết quả, Trang chủ, Bản đồ, Cài đặt (§10.2, §10.4, §10.5). Đang có cột mốc thì
+    ///   Tạm dừng có thêm "Restart Level" (chơi lại từ đầu màn); Retry chơi lại từ cột mốc.
     /// Mọi màn hình nằm dưới "Screens" của canvas HUD, nền tối chặn chạm xuống màn chơi (BalloonInput bỏ qua
     /// chạm trên UI). Trang chủ/Bản đồ/Cài đặt dừng thế giới bằng lý do Menu, Tạm dừng bằng lý do Pause.
     /// Mọi hoạt ảnh chạy bằng unscaled time.
@@ -22,13 +26,30 @@ namespace PopJet
         [SerializeField] LevelSession session;
         [SerializeField] LevelLoader loader;
         [SerializeField] LevelCameraDirector director;
+        [Tooltip("Bóng ma diễn lời giải khi bấm Gợi ý.")]
+        [SerializeField] HintGhost ghost;
+        [Tooltip("Thua cùng một màn từng này lần thì mời xem Gợi ý (GDD §3.5). Starting value.")]
+        [SerializeField, Min(1)] int hintAfterFails = 3;
+        [Tooltip("Dòng mời xem Gợi ý hiện bao lâu (giây).")]
+        [SerializeField] float hintInviteSeconds = 4f;
         [Tooltip("Vùng an toàn của HUD (SafeAreaFitter). Nút HUD mới đặt trong này.")]
         [SerializeField] RectTransform safeArea;
         [SerializeField] TMP_FontAsset font;
+        [Tooltip("Font tiêu đề (Baloo 2). Để trống thì dùng font chữ thường.")]
+        [SerializeField] TMP_FontAsset titleFont;
         [Tooltip("Material TMP có viền cho chữ nằm trên màn chơi.")]
         [SerializeField] Material outlineMaterial;
         [SerializeField] Sprite roundRect;
         [SerializeField] Sprite starSprite;
+        [Tooltip("Sprite tròn: bóng chọc thử ở Trang chủ, bóng chuyển màn.")]
+        [SerializeField] Sprite circleSprite;
+        [Header("Icon HUD (art AI, tuỳ chọn)")]
+        [Tooltip("Có icon thì nút Tạm dừng / Xem màn thành nút tròn, các nút Retry/Map/Settings có icon bên trái.")]
+        [SerializeField] Sprite iconPause;
+        [SerializeField] Sprite iconRestart;
+        [SerializeField] Sprite iconLook;
+        [SerializeField] Sprite iconMap;
+        [SerializeField] Sprite iconSettings;
         [Tooltip("Về đích bao lâu thì hiện màn Kết quả (giây, unscaled). Starting value.")]
         [SerializeField] float resultDelay = 0.8f;
         [Tooltip("Bảng mục tiêu đầu màn hiện bao lâu (giây). GDD §10.3.")]
@@ -37,15 +58,18 @@ namespace PopJet
         [SerializeField] float hintSeconds = 6f;
 
         // HUD
-        Button pauseButton, lookButton;
+        Button pauseButton, lookButton, hintButton;
         Image starChip;
-        TextMeshProUGUI hintLabel;
+        TextMeshProUGUI hintLabel, hintInvite;
         RectTransform objectives;
         float hintShownAt = -1f;
+        float inviteShownAt = -1f;
+        bool hintRunning;
 
         // Màn hình
         RectTransform screens;
         RectTransform pauseScreen, resultScreen, homeScreen, mapScreen, settingsScreen;
+        Button restartLevelButton;
         readonly Stack<RectTransform> backStack = new Stack<RectTransform>();
         RectTransform current;
 
@@ -64,12 +88,22 @@ namespace PopJet
 
         public bool IsScreenOpen => current != null;
         public string CurrentScreen => current != null ? current.name : null;
+        public bool IsHintPlaying => hintRunning;
+        /// <summary>Ô Sao trên HUD (TutorialCoach cho nhấp nháy ở màn 1-6).</summary>
+        public Image StarChip => starChip;
+
+        LevelSolution CurrentSolution => loader != null && loader.Level != null && loader.Level.HasSolution ? loader.Level.Solution : null;
+
+        /// <summary>Có lời giải và đã thua đủ số lần ở màn này thì có nút Gợi ý.</summary>
+        public bool HintAvailable => CurrentSolution != null && loader != null && GameFlow.FailCount(loader.Index) >= hintAfterFails;
 
         void Awake()
         {
             if (font != null) UiKit.Font = font;
+            UiKit.TitleFont = titleFont;
             if (outlineMaterial != null) UiKit.OutlineMaterial = outlineMaterial;
             if (roundRect != null) UiKit.RoundRect = roundRect;
+            ScreenTransition.Configure(circleSprite);
             if (safeArea == null) safeArea = (RectTransform)transform;
             BuildHud();
             screens = UiKit.Stretch(UiKit.Rect("Screens", transform));
@@ -82,7 +116,11 @@ namespace PopJet
 
         void OnEnable()
         {
-            if (balloon != null) balloon.Poked += OnPoked;
+            if (balloon != null)
+            {
+                balloon.Poked += OnPoked;
+                balloon.BecameEmpty += OnBalloonEmpty;
+            }
             if (session != null)
             {
                 session.StarCollected += OnStar;
@@ -92,7 +130,11 @@ namespace PopJet
 
         void OnDisable()
         {
-            if (balloon != null) balloon.Poked -= OnPoked;
+            if (balloon != null)
+            {
+                balloon.Poked -= OnPoked;
+                balloon.BecameEmpty -= OnBalloonEmpty;
+            }
             if (session != null)
             {
                 session.StarCollected -= OnStar;
@@ -104,6 +146,8 @@ namespace PopJet
         {
             GameSettings.Apply();
             starChip.gameObject.SetActive(session != null && session.LevelHasStar);
+            // Chơi lại từ cột mốc mà Sao đã nhặt trước đó: ô Sao sáng sẵn.
+            if (session != null && session.StarCollectedThisRun) starChip.color = UiKit.Gold;
             var catalog = loader != null ? loader.Catalog : null;
             if (GameFlow.ConsumeShowHome(catalog))
             {
@@ -111,6 +155,12 @@ namespace PopJet
                 return;
             }
             BeginLevel();
+            RefreshHintButton(true);
+        }
+
+        void OnBalloonEmpty()
+        {
+            if (loader != null) GameFlow.RegisterFail(loader.Index);
         }
 
         // ---------------------------------------------------------------- Đầu màn
@@ -120,7 +170,7 @@ namespace PopJet
             int index = loader != null ? loader.Index : 0;
             if (!GameFlow.ConsumeIntro(index))
             {
-                ShowHint();
+                ShowTutorialHint();
                 return;
             }
             objectives.gameObject.SetActive(true);
@@ -128,9 +178,9 @@ namespace PopJet
             {
                 introRunning = true;
                 introSkip = false;
-                StartCoroutine(director.Intro(() => introSkip, () => { introRunning = false; ShowHint(); }));
+                StartCoroutine(director.Intro(() => introSkip, () => { introRunning = false; ShowTutorialHint(); }));
             }
-            else ShowHint();
+            else ShowTutorialHint();
             StartCoroutine(HideObjectives());
         }
 
@@ -141,14 +191,67 @@ namespace PopJet
             objectives.gameObject.SetActive(false);
         }
 
-        void ShowHint()
+        /// <summary>Dòng gợi ý tutorial cuối màn hình (GDD §8.4). Màn dạy Par mà không ghi sẵn dòng nào thì tự giải thích Par.</summary>
+        void ShowTutorialHint()
         {
-            string hint = loader != null && loader.Level != null ? loader.Level.Hint : null;
+            var def = loader != null ? loader.Level : null;
+            string hint = def != null ? def.Hint : null;
+            if (string.IsNullOrEmpty(hint) && def != null && def.HasCue(TutorialCue.ParChip))
+                hint = GameText.ParIntro(session != null ? session.Par : def.Par);
             if (string.IsNullOrEmpty(hint)) return;
             hintLabel.text = hint;
             hintLabel.gameObject.SetActive(true);
             hintLabel.alpha = 1f;
             hintShownAt = Time.unscaledTime;
+        }
+
+        // ---------------------------------------------------------------- Gợi ý (§3.5, §7.2)
+
+        void RefreshHintButton(bool invite)
+        {
+            bool show = HintAvailable;
+            hintButton.gameObject.SetActive(show);
+            if (show && invite)
+            {
+                hintInvite.gameObject.SetActive(true);
+                hintInvite.alpha = 1f;
+                inviteShownAt = Time.unscaledTime;
+            }
+        }
+
+        /// <summary>Diễn thao tác kế tiếp của lời giải bằng bóng ma (nút Hint; smoke test gọi bằng reflection).</summary>
+        public void PlayHint()
+        {
+            var solution = CurrentSolution;
+            if (hintRunning || current != null || introRunning || ghost == null || solution == null || balloon == null) return;
+            var state = balloon.State;
+            if (state == BalloonState.Empty || state == BalloonState.Goal || state == BalloonState.Aiming) return;
+            int step = solution.HintStep(balloon.Body.position);
+            if (step < 0) return;
+            StartCoroutine(HintRoutine(solution, step));
+        }
+
+        IEnumerator HintRoutine(LevelSolution solution, int step)
+        {
+            hintRunning = true;
+            hintInvite.gameObject.SetActive(false);
+            inviteShownAt = -1f;
+            if (director != null)
+            {
+                director.SetLook(false);
+                director.FollowOverride(ghost.Body);
+            }
+            TimeController.Set(TimeReason.Hint, true);
+            float startedAt = Time.unscaledTime;
+            yield return ghost.Play(solution, step, () =>
+            {
+                // Chạm bất kỳ đâu để xem xong sớm (chờ một chút để cú chạm vào nút Hint không tự bỏ qua).
+                PointerHelper.Poll();
+                return PointerHelper.Down && Time.unscaledTime - startedAt > 0.4f;
+            });
+            if (director != null) director.FollowOverride(null);
+            TimeController.Set(TimeReason.Hint, false);
+            hintRunning = false;
         }
 
         void Update()
@@ -165,8 +268,25 @@ namespace PopJet
                 if (t > hintSeconds) hintLabel.alpha = Mathf.MoveTowards(hintLabel.alpha, 0f, Time.unscaledDeltaTime * 2f);
                 if (hintLabel.alpha <= 0f) { hintLabel.gameObject.SetActive(false); hintShownAt = -1f; }
             }
+            if (inviteShownAt >= 0f)
+            {
+                // Dòng mời nhún nhẹ rồi mờ dần (nút có PuffyButton lo scale riêng nên không đụng vào nút).
+                float t = Time.unscaledTime - inviteShownAt;
+                if (t > hintInviteSeconds) hintInvite.alpha = Mathf.MoveTowards(hintInvite.alpha, 0f, Time.unscaledDeltaTime * 2f);
+                hintInvite.rectTransform.localScale = Vector3.one * (1f + 0.06f * Mathf.Sin(t * 6f));
+                if (hintInvite.alpha <= 0f)
+                {
+                    hintInvite.gameObject.SetActive(false);
+                    inviteShownAt = -1f;
+                }
+            }
             if (lookButton != null)
-                UiKit.ButtonLabel(lookButton).text = director != null && director.IsLooking ? GameText.Back : GameText.Look;
+            {
+                bool looking = director != null && director.IsLooking;
+                UiKit.ButtonLabel(lookButton).text = looking ? GameText.Back : GameText.Look;
+                // Nút icon: đang xem màn thì tô màu chính để biết bấm lần nữa là quay lại.
+                if (iconLook != null) ((Image)lookButton.targetGraphic).color = looking ? UiKit.Primary : Color.white;
+            }
         }
 
         void OnPoked(int count)
@@ -177,7 +297,13 @@ namespace PopJet
 
         void OnStar() { if (starChip != null) starChip.color = UiKit.Gold; }
 
-        void OnCompleted(LevelResult r) { StartCoroutine(ShowResultLater(r)); }
+        void OnCompleted(LevelResult r)
+        {
+            GameFlow.ClearFails();
+            hintButton.gameObject.SetActive(false);
+            hintInvite.gameObject.SetActive(false);
+            StartCoroutine(ShowResultLater(r));
+        }
 
         IEnumerator ShowResultLater(LevelResult r)
         {
@@ -193,32 +319,60 @@ namespace PopJet
         {
             if (pushCurrent && current != null) backStack.Push(current);
             else backStack.Clear();
-            if (current != null) current.gameObject.SetActive(false);
+            HideScreen(current);
             current = screen;
             if (screen == mapScreen) RefreshMap();
             if (screen == homeScreen) homeCoins.text = GameText.Coins + " " + SaveSystem.Data.coins;
+            if (screen == pauseScreen) restartLevelButton.gameObject.SetActive(loader != null && CheckpointState.IsFor(loader.Index));
             RefreshToggles();
-            screen.gameObject.SetActive(true);
+            ShowScreen(screen);
             ApplyTimeReasons();
+        }
+
+        /// <summary>Tắt một màn hình: thẻ giấy "xì hơi" rồi mới tắt (§10.1); màn không có thẻ thì tắt ngay.</summary>
+        void HideScreen(RectTransform screen)
+        {
+            if (screen == null || !screen.gameObject.activeSelf) return;
+            var anim = screen.GetComponentInChildren<PopupAnim>();
+            if (anim != null && anim.gameObject.activeInHierarchy)
+            {
+                anim.Deflate(screen.gameObject);
+                StartCoroutine(HideLater(screen));
+            }
+            else screen.gameObject.SetActive(false);
+        }
+
+        /// <summary>Chắc chắn tắt sau khi xì hơi xong, trừ khi màn hình vừa được mở lại.</summary>
+        IEnumerator HideLater(RectTransform screen)
+        {
+            yield return new WaitForSecondsRealtime(0.2f);
+            if (screen != current) screen.gameObject.SetActive(false);
+        }
+
+        /// <summary>Bật màn hình; đang "xì hơi" dở thì bật lại từ đầu để thẻ phồng lên.</summary>
+        static void ShowScreen(RectTransform screen)
+        {
+            if (screen.gameObject.activeSelf) screen.gameObject.SetActive(false);
+            screen.gameObject.SetActive(true);
         }
 
         void CloseAll()
         {
             backStack.Clear();
-            if (current != null) current.gameObject.SetActive(false);
+            HideScreen(current);
             current = null;
             ApplyTimeReasons();
         }
 
         void Back()
         {
-            if (current != null) current.gameObject.SetActive(false);
+            HideScreen(current);
             current = backStack.Count > 0 ? backStack.Pop() : null;
             if (current != null)
             {
                 if (current == mapScreen) RefreshMap();
                 RefreshToggles();
-                current.gameObject.SetActive(true);
+                ShowScreen(current);
             }
             ApplyTimeReasons();
         }
@@ -236,25 +390,36 @@ namespace PopJet
         // Các thao tác công khai (nút bấm, smoke test gọi bằng reflection).
         public void Pause()
         {
-            if (current != null || (balloon != null && balloon.State == BalloonState.Goal)) return;
+            if (current != null || hintRunning || (balloon != null && balloon.State == BalloonState.Goal)) return;
             if (director != null) director.SetLook(false);
             Open(pauseScreen, false);
         }
 
         public void Resume() { CloseAll(); }
 
+        /// <summary>Chơi lại lượt này (từ cột mốc nếu đã chạm).</summary>
         public void Retry()
         {
             CloseAll();
             if (level != null) level.Restart();
         }
 
+        /// <summary>Chơi lại từ đầu màn, bỏ cột mốc (GDD §6 #9).</summary>
+        public void RestartLevel()
+        {
+            CheckpointState.Clear();
+            Retry();
+        }
+
         public void Next()
         {
             if (loader == null || !loader.HasNext) { Open(mapScreen, true); return; }
-            CloseAll();
-            if (level != null) level.LoadNext();
-            else loader.LoadNext();
+            ScreenTransition.Play(() =>
+            {
+                CloseAll();
+                if (level != null) level.LoadNext();
+                else loader.LoadNext();
+            });
         }
 
         public void OpenMap() { Open(mapScreen, true); }
@@ -264,24 +429,34 @@ namespace PopJet
         {
             int target = GameFlow.NextLevelToPlay(loader != null ? loader.Catalog : null);
             GameFlow.ForgetIntro();
-            if (loader != null && target != loader.Index) { CloseAll(); loader.LoadLevel(target); return; }
-            CloseAll();
-            BeginLevel();
+            ScreenTransition.Play(() =>
+            {
+                CloseAll();
+                if (loader != null && target != loader.Index) { loader.LoadLevel(target); return; }
+                BeginLevel();
+            });
         }
 
         public void PlayLevel(int index)
         {
             if (loader == null || !loader.Catalog.IsUnlocked(index)) return;
             GameFlow.ForgetIntro();
-            CloseAll();
-            loader.LoadLevel(index);
+            ScreenTransition.Play(() =>
+            {
+                CloseAll();
+                loader.LoadLevel(index);
+            });
         }
 
         public void GoHome()
         {
-            CloseAll();
-            GameFlow.RequestHome();
-            if (level != null) level.Restart();
+            ScreenTransition.Play(() =>
+            {
+                CloseAll();
+                CheckpointState.Clear(); // rời màn: lần sau vào lại từ đầu
+                GameFlow.RequestHome();
+                if (level != null) level.Restart();
+            });
         }
 
         // ---------------------------------------------------------------- HUD
@@ -289,7 +464,9 @@ namespace PopJet
         void BuildHud()
         {
             // Nút Tạm dừng góc trên trái (§10.3), cùng cỡ với nút Retry: 132 = 44 pt.
-            pauseButton = UiKit.Button("PauseButton", safeArea, "II", UiKit.Neutral, Pause, 56f);
+            pauseButton = iconPause != null
+                ? UiKit.IconButton("PauseButton", safeArea, iconPause, Pause)
+                : UiKit.Button("PauseButton", safeArea, "II", UiKit.Neutral, Pause, 56f);
             UiKit.Place((RectTransform)pauseButton.transform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(32f, -32f), new Vector2(132f, 132f));
 
             // Ô Sao: mờ = chưa nhặt, vàng = đã nhặt. Ẩn nếu màn không có Sao.
@@ -297,8 +474,20 @@ namespace PopJet
             UiKit.Place(starChip.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(560f, -48f), new Vector2(96f, 96f));
 
             // Nút Xem màn góc dưới trái (§10.3).
-            lookButton = UiKit.Button("LookButton", safeArea, GameText.Look, UiKit.Neutral, () => { if (director != null && current == null && !introRunning) director.ToggleLook(); }, 48f);
-            UiKit.Place((RectTransform)lookButton.transform, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(32f, 48f), new Vector2(220f, 132f));
+            System.Action toggleLook = () => { if (director != null && current == null && !introRunning && !hintRunning) director.ToggleLook(); };
+            lookButton = iconLook != null
+                ? UiKit.IconButton("LookButton", safeArea, iconLook, toggleLook)
+                : UiKit.Button("LookButton", safeArea, GameText.Look, UiKit.Neutral, toggleLook, 48f);
+            UiKit.Place((RectTransform)lookButton.transform, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(32f, 48f),
+                iconLook != null ? new Vector2(132f, 132f) : new Vector2(220f, 132f));
+
+            // Nút Gợi ý góc dưới phải (§10.3), chỉ hiện sau khi thua đủ số lần; dòng mời nằm bên trái nút.
+            hintButton = UiKit.Button("HintButton", safeArea, GameText.Hint, UiKit.Gold, PlayHint, 48f);
+            UiKit.Place((RectTransform)hintButton.transform, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-32f, 48f), new Vector2(220f, 132f));
+            hintButton.gameObject.SetActive(false);
+            hintInvite = UiKit.Label("HintInvite", safeArea, GameText.HintInvite, 46f, Color.white, TextAlignmentOptions.Right, true);
+            UiKit.Place(hintInvite.rectTransform, new Vector2(1f, 0f), new Vector2(1f, 0.5f), new Vector2(-276f, 114f), new Vector2(520f, 70f));
+            hintInvite.gameObject.SetActive(false);
 
             hintLabel = UiKit.Label("HintLabel", safeArea, "", 52f, Color.white, TextAlignmentOptions.Center, true);
             UiKit.Place(hintLabel.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 230f), new Vector2(1000f, 90f));
@@ -342,15 +531,20 @@ namespace PopJet
             var root = UiKit.Overlay("Pause", screens, UiKit.Dim);
             var card = UiKit.Card("Card", root, new Vector2(820f, 1180f));
             UiKit.Column(card, 28f, 56);
+            // Cao theo nội dung: nút "Restart Level" chỉ hiện khi đang có cột mốc.
+            card.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             UiKit.Size(UiKit.Label("Title", card, GameText.Paused, 96f, UiKit.Ink), 130f);
             UiKit.Size(UiKit.Button("Resume", card, GameText.Resume, UiKit.Primary, Resume), 150f);
-            UiKit.Size(UiKit.Button("Retry", card, GameText.Retry, UiKit.Neutral, Retry), 132f);
-            UiKit.Size(UiKit.Button("Map", card, GameText.Map, UiKit.Neutral, OpenMap), 132f);
+            UiKit.Size(UiKit.WithIcon(UiKit.Button("Retry", card, GameText.Retry, UiKit.Neutral, Retry), iconRestart), 132f);
+            restartLevelButton = UiKit.Button("RestartLevel", card, GameText.RestartLevel, UiKit.Neutral, RestartLevel);
+            UiKit.Size(restartLevelButton, 132f);
+            restartLevelButton.gameObject.SetActive(false);
+            UiKit.Size(UiKit.WithIcon(UiKit.Button("Map", card, GameText.Map, UiKit.Neutral, OpenMap), iconMap), 132f);
             AddToggle(card, () => GameText.Sound + ": " + OnOff(SaveSystem.Data.settings.SoundOn),
                 () => GameSettings.SetSound(!SaveSystem.Data.settings.SoundOn));
             AddToggle(card, () => GameText.Music + ": " + OnOff(SaveSystem.Data.settings.MusicOn),
                 () => GameSettings.SetMusic(!SaveSystem.Data.settings.MusicOn));
-            UiKit.Size(UiKit.Button("Settings", card, GameText.Settings, UiKit.Neutral, OpenSettings), 132f);
+            UiKit.Size(UiKit.WithIcon(UiKit.Button("Settings", card, GameText.Settings, UiKit.Neutral, OpenSettings), iconSettings), 132f);
             root.gameObject.SetActive(false);
             return root;
         }
@@ -395,8 +589,8 @@ namespace PopJet
             hb.spacing = 24f;
             hb.childControlWidth = hb.childControlHeight = true;
             hb.childForceExpandWidth = hb.childForceExpandHeight = true;
-            UiKit.Button("Retry", bottom, GameText.Retry, UiKit.Neutral, Retry);
-            UiKit.Button("Map", bottom, GameText.Map, UiKit.Neutral, OpenMap);
+            UiKit.WithIcon(UiKit.Button("Retry", bottom, GameText.Retry, UiKit.Neutral, Retry), iconRestart);
+            UiKit.WithIcon(UiKit.Button("Map", bottom, GameText.Map, UiKit.Neutral, OpenMap), iconMap);
             root.gameObject.SetActive(false);
             return root;
         }
@@ -422,7 +616,8 @@ namespace PopJet
             yield return new WaitForSecondsRealtime(delay);
             if (!on) yield break;
             star.color = UiKit.Gold;
-            if (on) Haptics.Light();
+            Haptics.Light();
+            if (GameAudio.Current != null) GameAudio.Current.ResultNote(System.Array.IndexOf(resultStars, star));
             float t = 0f;
             while (t < 0.3f)
             {
@@ -440,17 +635,31 @@ namespace PopJet
         {
             var root = UiKit.Overlay("Home", screens, new Color(0.16f, 0.2f, 0.28f, 0.88f));
             var title = UiKit.Label("Title", root, GameText.GameTitle, 170f, Color.white, TextAlignmentOptions.Center, true);
-            UiKit.Place(title.rectTransform, new Vector2(0.5f, 0.72f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1000f, 240f));
+            UiKit.Place(title.rectTransform, new Vector2(0.5f, 0.86f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1000f, 240f));
             homeCoins = UiKit.Label("Coins", root, "", 56f, UiKit.Gold, TextAlignmentOptions.Center, true);
-            UiKit.Place(homeCoins.rectTransform, new Vector2(0.5f, 0.62f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(800f, 80f));
+            UiKit.Place(homeCoins.rectTransform, new Vector2(0.5f, 0.78f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(800f, 80f));
+
+            // Sân chơi (§10.2): Pốp lơ lửng, chạm để chọc thử.
+            var pop = UiKit.Image("Balloon", root, circleSprite, new Color(0.93f, 0.33f, 0.3f), true);
+            UiKit.Place(pop.rectTransform, new Vector2(0.5f, 0.56f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(240f, 240f));
+            var shine = UiKit.Image("Shine", pop.transform, circleSprite, new Color(1f, 1f, 1f, 0.45f));
+            UiKit.Place(shine.rectTransform, new Vector2(0.3f, 0.74f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(60f, 38f));
+            foreach (float x in new[] { -38f, 38f })
+            {
+                var eye = UiKit.Image("Eye", pop.transform, circleSprite, UiKit.Ink);
+                UiKit.Place(eye.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(x, 18f), new Vector2(30f, 38f));
+            }
+            var mouth = UiKit.Image("Mouth", pop.transform, circleSprite, UiKit.Ink);
+            UiKit.Place(mouth.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -34f), new Vector2(46f, 18f));
+            pop.gameObject.AddComponent<HomeBalloon>();
 
             var col = UiKit.Rect("Buttons", root);
-            UiKit.Place(col, new Vector2(0.5f, 0.12f), new Vector2(0.5f, 0f), Vector2.zero, new Vector2(760f, 640f));
+            UiKit.Place(col, new Vector2(0.5f, 0.05f), new Vector2(0.5f, 0f), Vector2.zero, new Vector2(760f, 600f));
             var v = UiKit.Column(col, 32f, 0);
             v.childAlignment = TextAnchor.LowerCenter;
             UiKit.Size(UiKit.Button("Play", col, GameText.Play, UiKit.Primary, PlayFromHome, 96f), 220f);
-            UiKit.Size(UiKit.Button("Map", col, GameText.Map, UiKit.Neutral, OpenMap), 140f);
-            UiKit.Size(UiKit.Button("Settings", col, GameText.Settings, UiKit.Neutral, OpenSettings), 140f);
+            UiKit.Size(UiKit.WithIcon(UiKit.Button("Map", col, GameText.Map, UiKit.Neutral, OpenMap), iconMap), 140f);
+            UiKit.Size(UiKit.WithIcon(UiKit.Button("Settings", col, GameText.Settings, UiKit.Neutral, OpenSettings), iconSettings), 140f);
             root.gameObject.SetActive(false);
             return root;
         }

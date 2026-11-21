@@ -18,8 +18,20 @@ MonoBehaviour:
   prefab: {fileID: 7367158222727249848, guid: 245499f67b0877b45a3e663b2c32c654, type: 3}
   par: 7
   hint: Climb! The vacuum is coming
+  tutorial: 0
   notes: "M\xE0n tr\xF9m (\xA78.1): m\xE1y h\xFAt b\u1EE5i \u0111u\u1ED5i t\u1EEB
     d\u01B0\u1EDBi l\xEAn 0.45 \u0111\u01A1n v\u1ECB/gi\xE2y (ch\u1EC9 ch\u1EA1y
-    sau c\xFA ch\u1ECDc \u0111\u1EA7u). Cao 2.2 m\xE0n h\xECnh, ch\u01B0a c\xF3 checkpoint
-    (\xA76 #9 ch\u01B0a l\xE0m). 3 keo v\xE1 (ch\u1EC9 v\xE1, kh\xF4ng h\u1ED3i kh\xED),
-    qu\u1EA1t v\xE0 ph\xE1o gi\u1EA5y gi\xFAp leo mi\u1EC5n ph\xED. Par t\u1EA1m."
+    sau c\xFA ch\u1ECDc \u0111\u1EA7u). Cao 2.2 m\xE0n h\xECnh. C\u1ED9t m\u1ED1c
+    (\xA76 #9) ngay tr\xEAn \u0111\u01B0\u1EDDng ph\xE1o gi\u1EA5y b\u1EAFn l\xEAn
+    t\u1EA7ng 2: thua th\xEC ch\u01A1i l\u1EA1i t\u1EEB \u0111\xF3, m\xE1y h\xFAt
+    b\u1EAFt \u0111\u1EA7u \u1EDF y = 1. 3 keo v\xE1 (ch\u1EC9 v\xE1, kh\xF4ng h\u1ED3i
+    kh\xED), qu\u1EA1t v\xE0 ph\xE1o gi\u1EA5y gi\xFAp leo mi\u1EC5n ph\xED. Par
+    t\u1EA1m."
+  solution:
+    sampleInterval: 0.05
+    fixedDeltaTime: 0.02
+    path: []
+    steps: []
+    pokes: 0
+    totalTicks: 0
+    recordedAt: 

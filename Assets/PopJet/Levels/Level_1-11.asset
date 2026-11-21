@@ -18,6 +18,15 @@ MonoBehaviour:
   prefab: {fileID: 7943740535261777195, guid: 2b105afc109099e4e8fc66e10902320d, type: 3}
   par: 1
   hint: Tap to fire the cannon
+  tutorial: 0
   notes: "Ph\xE1o gi\u1EA5y (\xA76 #5): ch\u1ECDc 1 l\u1EA7n xu\u1ED1ng ph\xE1o,
     canh n\xF2ng xoay qua khe gi\u1EEFa hai thanh gai r\u1ED3i ch\u1EA1m \u0111\u1EC3
     b\u1EAFn. Par 1."
+  solution:
+    sampleInterval: 0.05
+    fixedDeltaTime: 0.02
+    path: []
+    steps: []
+    pokes: 0
+    totalTicks: 0
+    recordedAt: 

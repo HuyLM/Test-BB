@@ -67,6 +67,7 @@ namespace PopJet
 
         bool starCollected;
         bool completed;
+        bool fromCheckpoint;
         readonly List<int> runCoins = new List<int>();
 
         public string LevelId => loader != null && loader.Level != null ? loader.Level.Id : SceneManager.GetActiveScene().name;
@@ -78,6 +79,8 @@ namespace PopJet
         public int CoinsThisRun => runCoins.Count;
         public LevelResult LastResult { get; private set; }
         public bool HasResult => completed;
+        /// <summary>Lượt này bắt đầu từ cột mốc (không được Vương miện).</summary>
+        public bool StartedFromCheckpoint => fromCheckpoint;
 
         /// <summary>Thành tích đã lưu của một màn (null = chưa về đích lần nào).</summary>
         public static LevelRecord GetRecord(string levelId) => SaveSystem.GetRecord(levelId);
@@ -93,12 +96,18 @@ namespace PopJet
         void Awake()
         {
             Current = this;
-        }
-
-        void Start()
-        {
-            // LevelLoader đã tạo prefab màn trong Awake (chạy trước mọi script).
+            // LevelLoader (chạy trước) đã tạo prefab màn. Tính trong Awake để GameScreens.Start (cùng thứ tự thực thi,
+            // có thể chạy trước Start của script này) thấy đúng màn có Sao hay không.
             LevelHasStar = FindObjectsByType<StarPickup>(FindObjectsSortMode.None).Length > 0;
+            // Chơi lại từ cột mốc: giữ Sao và xu đã nhặt trước cột mốc, ẩn chúng đi.
+            fromCheckpoint = loader != null && loader.StartedFromCheckpoint;
+            if (!fromCheckpoint) return;
+            starCollected = CheckpointState.Star;
+            runCoins.AddRange(CheckpointState.Coins);
+            if (starCollected)
+                foreach (var s in FindObjectsByType<StarPickup>(FindObjectsSortMode.None)) s.HideCollected();
+            foreach (var c in FindObjectsByType<CoinPickup>(FindObjectsSortMode.None))
+                if (runCoins.Contains(c.Id)) c.HideCollected();
         }
 
         void OnDestroy()
@@ -109,11 +118,20 @@ namespace PopJet
         void OnEnable()
         {
             if (balloon != null) balloon.GoalReached += OnGoal;
+            Checkpoint.Activated += OnCheckpoint;
         }
 
         void OnDisable()
         {
             if (balloon != null) balloon.GoalReached -= OnGoal;
+            Checkpoint.Activated -= OnCheckpoint;
+        }
+
+        /// <summary>Bóng vừa chạm cột mốc: lưu thêm Sao và xu của lượt này vào trạng thái cột mốc.</summary>
+        void OnCheckpoint(Checkpoint checkpoint)
+        {
+            if (completed) return;
+            CheckpointState.SaveRun(starCollected, runCoins);
         }
 
         /// <summary>StarPickup gọi khi bóng chạm Sao.</summary>
@@ -158,8 +176,11 @@ namespace PopJet
                 firstClear = !replay,
                 coinsEarned = fresh + (replay ? replayCoins : 0)
             };
-            r.crown = r.Stars == 3; // chưa có booster; phần sau: dùng booster thì không được Vương miện
+            // Vương miện = 3 sao trong cùng một lượt: lượt chơi lại từ cột mốc không tính (đã thua giữa chừng).
+            // Chưa có booster; phần sau: dùng booster thì cũng không được Vương miện.
+            r.crown = r.Stars == 3 && !fromCheckpoint;
             LastResult = r;
+            CheckpointState.Clear(); // về đích: lần sau vào lại màn từ đầu
             SaveSystem.MergeResultWithCoins(r, runCoins); // gộp từng sao, cộng xu và ghi file ngay
             Completed?.Invoke(r);
         }

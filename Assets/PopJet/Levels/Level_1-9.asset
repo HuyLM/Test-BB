@@ -18,6 +18,17 @@ MonoBehaviour:
   prefab: {fileID: 6033823966340402260, guid: 48d2d0798281c414a95264f517f9c67d, type: 3}
   par: 3
   hint: 
+  tutorial: 4
   notes: "Gai di chuy\u1EC3n (\xA75.2 #2) + Par l\u1EA7n \u0111\u1EA7u: hai thanh
     gai ch\u1EA1y ng\u01B0\u1EE3c pha 1 \u0111\u01A1n v\u1ECB/gi\xE2y. Canh l\xFAc
-    gai l\u1EC7ch r\u1ED3i ch\u1ECDc th\u1EB3ng. Par t\u1EA1m."
+    gai l\u1EC7ch r\u1ED3i ch\u1ECDc th\u1EB3ng. Ph\u1EA7n Par tr\xEAn HUD s\xE1ng
+    l\xEAn, d\xF2ng g\u1EE3i \xFD gi\u1EA3i th\xEDch Par (TutorialCue.ParChip). Par
+    t\u1EA1m."
+  solution:
+    sampleInterval: 0.05
+    fixedDeltaTime: 0.02
+    path: []
+    steps: []
+    pokes: 0
+    totalTicks: 0
+    recordedAt: 

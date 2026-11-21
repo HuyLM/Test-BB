@@ -21,7 +21,7 @@ namespace PopJet.EditorTools
         static readonly Color PinColor = new Color(0.7f, 0.72f, 0.78f);
         static readonly Color HazardColor = new Color(1f, 0.66f, 0.1f); // nhóm D: vàng cam, không dùng đỏ (§5.1)
 
-        static Sprite starSprite;
+        static Sprite starSprite, handSprite, leafSprite;
         static PhysicsMaterial2D pillowMat;
         static int coinCounter;
 
@@ -42,6 +42,7 @@ namespace PopJet.EditorTools
         {
             public string id, title, hint, notes;
             public int par;
+            public TutorialCue cues;
             public System.Func<GameObject> build;
         }
 
@@ -49,6 +50,8 @@ namespace PopJet.EditorTools
         {
             EnsureDir(LevelPrefabDir);
             starSprite = MakeSprite("Star", 128, StarShape);
+            handSprite = MakeSprite("Hand", 128, HandShape);
+            leafSprite = MakeSprite("Leaf", 64, LeafShape);
             pillowMat = MakePillowMaterial();
             artCache.Clear();
 
@@ -57,7 +60,7 @@ namespace PopJet.EditorTools
             foreach (var spec in specs)
             {
                 var prefab = SaveLevelPrefab(spec.build());
-                defs.Add(SaveLevelDefinition("Level_" + spec.id, spec.id, spec.title, prefab, spec.par, spec.hint, spec.notes));
+                defs.Add(SaveLevelDefinition("Level_" + spec.id, spec, prefab));
             }
 
             string catalogPath = $"{LevelDir}/LevelCatalog.asset";
@@ -86,16 +89,57 @@ namespace PopJet.EditorTools
             if (director == null) director = new GameObject("LevelCameraDirector").AddComponent<LevelCameraDirector>();
             SetRefs(director, ("followCam", vcam), ("loader", loader));
 
+            // Ghi và phát lại lời giải (GDD §8.3 điều 5, §15.7), bóng ma Gợi ý (§3.5, §7.2).
+            var recorder = Object.FindAnyObjectByType<SolutionRecorder>();
+            if (recorder == null) recorder = new GameObject("SolutionRecorder").AddComponent<SolutionRecorder>();
+            SetRefs(recorder, ("balloon", balloon), ("loader", loader));
+            var ghost = Object.FindAnyObjectByType<HintGhost>();
+            if (ghost == null) ghost = new GameObject("HintGhost").AddComponent<HintGhost>();
+            SetRefs(ghost, ("bodySprite", circle), ("needleSprite", triangle), ("dotSprite", circle), ("material", spriteMat));
+
             // Phần 2.4 + 2.5: HUD đầy đủ và các màn hình, dựng lúc chạy trên canvas HUD.
             if (hud != null)
             {
                 var screens = GetOrAdd<GameScreens>(hud.gameObject);
                 SetRefs(screens, ("balloon", balloon), ("level", level), ("session", session), ("loader", loader),
                     ("director", director), ("safeArea", hud.transform.Find("SafeArea")),
-                    ("font", EnsureTmpFont()), ("roundRect", roundRect), ("starSprite", starSprite));
+                    ("font", EnsureTmpFont()), ("roundRect", roundRect), ("starSprite", starSprite), ("ghost", ghost));
                 var tmpFont = EnsureTmpFont();
                 if (tmpFont != null) SetRefs(screens, ("outlineMaterial", TmpOutlineMaterial(tmpFont)));
+                SetRefs(screens, ("titleFont", TitleFont()));
+
+                SetRefs(screens, ("circleSprite", circle));
+
+                // Chỉ báo đích ngoài màn hình (§10.3).
+                SetRefs(GetOrAdd<GoalIndicator>(hud.gameObject), ("balloon", balloon), ("screens", screens),
+                    ("safeArea", hud.transform.Find("SafeArea")), ("arrowSprite", triangle));
+
+                // Âm thanh còn thiếu (§11.2): nút UI, Sao, 3 nốt Kết quả, cót két, ép nhạc khi nổ.
+                var audioGo = GameObject.Find("GameAudio") ?? new GameObject("GameAudio");
+                var gameAudio = GetOrAdd<GameAudio>(audioGo);
+                SetRefs(gameAudio, ("balloon", balloon), ("session", session), ("music", Object.FindAnyObjectByType<TimeFreezeAudio>()),
+                    ("creakClip", MakeCreakClip("creak_1")));
+                SetArray(gameAudio, "uiClips", new Object[] { MakeBlipClip("ui_pop_1", 900f, 0.05f), MakeBlipClip("ui_pop_2", 1000f, 0.045f), MakeBlipClip("ui_pop_3", 820f, 0.055f) });
+                SetArray(gameAudio, "starClips", new Object[] { MakeBellClip("star_1", 1760f, 0.5f), MakeBellClip("star_2", 1865f, 0.5f), MakeBellClip("star_3", 1661f, 0.5f) });
+                SetArray(gameAudio, "resultNotes", new Object[] { MakeBellClip("note_c5", 523.25f, 0.7f), MakeBellClip("note_e5", 659.25f, 0.7f), MakeBellClip("note_g5", 783.99f, 0.7f) });
+                SetArray(gameAudio, "popClips", new Object[] { AssetDatabase.LoadAssetAtPath<AudioClip>(SfxDir + "/pop_1.wav"), AssetDatabase.LoadAssetAtPath<AudioClip>(SfxDir + "/pop_2.wav") });
+                var feedback = balloon.GetComponent<BalloonFeedback>();
+                if (feedback != null)
+                    SetArray(feedback, "patchClips", new Object[] { MakeToneClip("patch_1", 0.15f, 660f, 990f), MakeTapeClip("patch_2", 7), MakeTapeClip("patch_3", 8) });
+
+                // Tutorial bằng hình (§8.4): bàn tay 1-1, ô Sao 1-6, ô Par 1-9, gợi ý cách hủy.
+                var coach = Object.FindAnyObjectByType<TutorialCoach>();
+                if (coach == null) coach = new GameObject("TutorialCoach").AddComponent<TutorialCoach>();
+                SetRefs(coach, ("balloon", balloon), ("input", Object.FindAnyObjectByType<BalloonInput>()), ("loader", loader),
+                    ("session", session), ("hud", hud), ("screens", screens), ("safeArea", hud.transform.Find("SafeArea")),
+                    ("handSprite", handSprite), ("material", spriteMat));
             }
+
+            // Art AI cho bóng, kim, icon HUD, vân giấy (PopJetArtWorld1.cs).
+            ApplySceneArt(balloon, Object.FindAnyObjectByType<BalloonInput>(),
+                hud != null ? hud.GetComponent<GameScreens>() : null, hud != null ? hud.transform : null);
+
+            BuildWorld1Atlas();
 
             // Về đích thì hiện màn Kết quả (GameScreens), không tự sang màn kế.
             var so = new SerializedObject(level);
@@ -114,7 +158,8 @@ namespace PopJet.EditorTools
             return new List<LevelSpec>
             {
                 L("1-1", "Up, Up!", 1, "Hold the balloon, drag, release", BuildLevelTutorial,
-                    "Giới thiệu (§8.4): đích ngay phía trên. Lời giải: kéo kim xuống dưới, thả 1 lần."),
+                    "Giới thiệu (§8.4): đích ngay phía trên. Lời giải: kéo kim xuống dưới, thả 1 lần. " +
+                    "Bàn tay mờ trên bóng, khi giữ thì bàn tay ma kéo xuống (TutorialCue.DragHand).", TutorialCue.DragHand),
                 L("1-2", "Other Way", 2, "You fly away from the needle", Level_1_2,
                     "Giới thiệu: đích chéo lên bên phải. Lời giải: 2 cú chọc chéo (kim chĩa xuống trái). Par tạm."),
                 L("1-3", "Air Counts", 3, "Every poke costs air", Level_1_3,
@@ -124,13 +169,17 @@ namespace PopJet.EditorTools
                 L("1-5", "Ouch!", 3, null, Level_1_5,
                     "Gai và keo: thanh gai chắn giữa, keo ngay phía sau. Đi lách hai bên khe 1.2 hoặc lao thẳng qua gai rồi vá. Par tạm."),
                 L("1-6", "Shiny Star", 3, "Grab the star for a bonus", Level_1_6,
-                    "Sao lệch đường: Sao ở dưới bên trái, đích phía trên kệ. Par tạm."),
+                    "Sao lệch đường: Sao ở dưới bên trái, đích phía trên kệ. Ô Sao trên HUD nhấp nháy (TutorialCue.StarChip). Par tạm.",
+                    TutorialCue.StarChip),
                 L("1-7", "Breeze", 2, null, Level_1_7,
-                    "Quạt: cột gió bên trái đưa bóng lên miễn phí. Lời giải: chọc sang trái vào gió, tới đỉnh chọc vào đích. Sao ở trên kệ phải. Par tạm."),
+                    "Quạt: cột gió bên trái đưa bóng lên miễn phí, lá giấy bay theo gió (WindLeaves). " +
+                    "Lời giải: chọc sang trái vào gió, tới đỉnh chọc vào đích. Sao ở trên kệ phải. Par tạm."),
                 L("1-8", "Lights Out", 4, null, BuildLevelSandbox,
-                    "Công tắc và cửa (bố cục scene mẫu cũ): bấm nút trên tường trái để mở sàn buồng đích. Par 4 tạm."),
+                    "Công tắc và cửa (bố cục scene mẫu cũ): bấm nút trên tường trái để mở sàn buồng đích. " +
+                    "Dây mờ nối nút với cửa (SwitchWire). Par 4 tạm."),
                 L("1-9", "On the Move", 3, null, Level_1_9,
-                    "Gai di chuyển (§5.2 #2) + Par lần đầu: hai thanh gai chạy ngược pha 1 đơn vị/giây. Canh lúc gai lệch rồi chọc thẳng. Par tạm."),
+                    "Gai di chuyển (§5.2 #2) + Par lần đầu: hai thanh gai chạy ngược pha 1 đơn vị/giây. Canh lúc gai lệch rồi chọc thẳng. " +
+                    "Phần Par trên HUD sáng lên, dòng gợi ý giải thích Par (TutorialCue.ParChip). Par tạm.", TutorialCue.ParChip),
                 L("1-10", "Coin Shower", 2, null, Level_1_10,
                     "Màn nghỉ: rộng, nhiều xu, đích to. Par tạm."),
                 L("1-11", "Paper Cannon", 1, "Tap to fire the cannon", Level_1_11,
@@ -152,13 +201,15 @@ namespace PopJet.EditorTools
                 L("1-19", "Kitchen Chaos", 4, null, Level_1_19,
                     "Phối trộn: mèo + nến + quạt + trạm bơm tường trái (thay keo vá: màn không có gai nên keo vô dụng). Par tạm."),
                 L("1-20", "The Vacuum", 7, "Climb! The vacuum is coming", Level_1_20,
-                    "Màn trùm (§8.1): máy hút bụi đuổi từ dưới lên 0.45 đơn vị/giây (chỉ chạy sau cú chọc đầu). Cao 2.2 màn hình, " +
-                    "chưa có checkpoint (§6 #9 chưa làm). 3 keo vá (chỉ vá, không hồi khí), quạt và pháo giấy giúp leo miễn phí. Par tạm."),
+                    "Màn trùm (§8.1): máy hút bụi đuổi từ dưới lên 0.45 đơn vị/giây (chỉ chạy sau cú chọc đầu). Cao 2.2 màn hình. " +
+                    "Cột mốc (§6 #9) ngay trên đường pháo giấy bắn lên tầng 2: thua thì chơi lại từ đó, máy hút bắt đầu ở y = 1. " +
+                    "3 keo vá (chỉ vá, không hồi khí), quạt và pháo giấy giúp leo miễn phí. Par tạm."),
             };
         }
 
-        static LevelSpec L(string id, string title, int par, string hint, System.Func<GameObject> build, string notes) =>
-            new LevelSpec { id = id, title = title, par = par, hint = hint, build = build, notes = notes };
+        static LevelSpec L(string id, string title, int par, string hint, System.Func<GameObject> build, string notes,
+            TutorialCue cues = TutorialCue.None) =>
+            new LevelSpec { id = id, title = title, par = par, hint = hint, build = build, notes = notes, cues = cues };
 
         static GameObject Level_1_2()
         {
@@ -398,7 +449,10 @@ namespace PopJet.EditorTools
             var root = NewLevelRoot("Level_1-20", new Vector2(0f, -1.4f));
             var l = root.transform;
             OuterWalls(l, h);
-            Vacuum(l, new Vector2(0f, -6.2f), new Vector2(0f, h - 1.5f), 0.45f);
+            var vacuum = Vacuum(l, new Vector2(0f, -6.2f), new Vector2(0f, h - 1.5f), 0.45f);
+            // Cột mốc (§6 #9) trên đường pháo giấy bắn thẳng lên khe trái tầng 2. Chơi lại từ đây thì máy hút ở y = 1:
+            // đỉnh vùng hút (tâm + 3.9) còn cách bóng 4.5, khoảng 10 giây sau cú chọc đầu mới tới (starting value).
+            CheckpointAt(l, new Vector2(-2.0f, 9.4f), vacuum, 1.0f - (-6.2f));
 
             // Tầng 1 (khe bên phải), tầng 2 (khe bên trái), tầng 3 (khe bên phải).
             Shelf(l, new Vector2(-0.6f, 3.0f), new Vector2(4.4f, 0.3f));
@@ -435,7 +489,7 @@ namespace PopJet.EditorTools
             return prefab.GetComponent<LevelRoot>();
         }
 
-        static LevelDefinition SaveLevelDefinition(string file, string id, string title, LevelRoot prefab, int par, string hint, string notes)
+        static LevelDefinition SaveLevelDefinition(string file, LevelSpec spec, LevelRoot prefab)
         {
             string path = $"{LevelDir}/{file}.asset";
             var def = AssetDatabase.LoadAssetAtPath<LevelDefinition>(path);
@@ -445,13 +499,18 @@ namespace PopJet.EditorTools
                 AssetDatabase.CreateAsset(def, path);
             }
             var so = new SerializedObject(def);
-            so.FindProperty("id").stringValue = id;
-            so.FindProperty("title").stringValue = title;
+            so.FindProperty("id").stringValue = spec.id;
+            so.FindProperty("title").stringValue = spec.title;
             so.FindProperty("world").intValue = 1;
             so.FindProperty("prefab").objectReferenceValue = prefab;
-            so.FindProperty("par").intValue = par;
-            so.FindProperty("hint").stringValue = hint ?? "";
-            so.FindProperty("notes").stringValue = notes;
+            // Màn đã có lời giải designer ghi: Par theo lời giải (hoặc đã chỉnh tay), không ghi đè bằng bản nháp.
+            var parProp = so.FindProperty("par");
+            if (!def.HasSolution) parProp.intValue = spec.par;
+            else if (parProp.intValue != spec.par)
+                Debug.Log($"[PopJet] {spec.id}: giữ Par {parProp.intValue} theo lời giải đã ghi (bản nháp builder: {spec.par}).");
+            so.FindProperty("hint").stringValue = spec.hint ?? "";
+            so.FindProperty("tutorial").intValue = (int)spec.cues;
+            so.FindProperty("notes").stringValue = spec.notes;
             so.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(def);
             return def;
@@ -487,7 +546,9 @@ namespace PopJet.EditorTools
             goal.transform.SetParent(level);
             goal.transform.position = pos;
             goal.transform.localScale = Vector3.one * size;
-            AddSprite(goal, circle, new Color(0.3f, 0.85f, 0.45f, 0.6f), 1);
+            var goalSr = AddSprite(goal, circle, new Color(0.3f, 0.85f, 0.45f, 0.6f), 1);
+            var goalArt = ArtSprite("Goal");
+            if (goalArt != null) { goalSr.enabled = false; AddArtFit(goal.transform, goalArt, new Vector2(1.35f, 1.25f), 2, Vector2.zero); }
             goal.AddComponent<CircleCollider2D>().isTrigger = true;
             goal.AddComponent<GoalZone>();
         }
@@ -639,6 +700,8 @@ namespace PopJet.EditorTools
             col.size = new Vector2(length, width);
             col.isTrigger = true;
             fan.AddComponent<Fan>();
+            // Lá giấy bay theo gió (§8.4 màn 1-7): cho thấy vùng và hướng gió ở mọi quạt.
+            SetRefs(fan.AddComponent<WindLeaves>(), ("leafSprite", leafSprite), ("material", spriteMat));
             var wind = new GameObject("WindZone");
             wind.transform.SetParent(fan.transform, false);
             wind.transform.localScale = new Vector3(length, width, 1f);
@@ -666,11 +729,19 @@ namespace PopJet.EditorTools
             star.transform.SetParent(level);
             star.transform.position = pos;
             star.transform.localScale = Vector3.one * 0.6f;
+            // Hình nằm ở object con: chỉ hình xoay, collider đứng yên (lời giải phát lại không lệch theo khung hình).
             var art = ArtSprite("Star");
-            if (art != null) AddArt(star.transform, art, 1.05f, 6, Vector2.zero);
-            else AddSprite(star, starSprite, new Color(1f, 0.824f, 0.247f), 6); // #FFD23F
+            Transform visual;
+            if (art != null) visual = AddArt(star.transform, art, 1.05f, 6, Vector2.zero).transform;
+            else
+            {
+                var v = new GameObject("Visual");
+                v.transform.SetParent(star.transform, false);
+                AddSprite(v, starSprite, new Color(1f, 0.824f, 0.247f), 6); // #FFD23F
+                visual = v.transform;
+            }
             star.AddComponent<CircleCollider2D>().radius = 0.4f;
-            star.AddComponent<StarPickup>();
+            SetRefs(star.AddComponent<StarPickup>(), ("visual", visual));
         }
 
         /// <summary>Xu (§7.1): đồng vàng nhỏ, mã tăng dần trong một màn.</summary>
@@ -682,16 +753,22 @@ namespace PopJet.EditorTools
                 coin.transform.SetParent(level);
                 coin.transform.position = p;
                 coin.transform.localScale = Vector3.one * 0.32f;
-                AddSprite(coin, circle, new Color(1f, 0.78f, 0.2f), 6);
+                // Hình nằm ở object con: chỉ hình nhún, collider đứng yên (lời giải phát lại không lệch theo khung hình).
+                var visual = new GameObject("Visual");
+                visual.transform.SetParent(coin.transform, false);
+                var coinSr = AddSprite(visual, circle, new Color(1f, 0.78f, 0.2f), 6);
+                var coinArt = ArtSprite("Coin");
+                if (coinArt != null) { coinSr.enabled = false; AddArt(visual.transform, coinArt, 1.2f, 6, Vector2.zero); }
                 var shine = new GameObject("Shine");
-                shine.transform.SetParent(coin.transform, false);
+                shine.transform.SetParent(visual.transform, false);
                 shine.transform.localPosition = new Vector3(-0.15f, 0.15f, 0f);
                 shine.transform.localScale = Vector3.one * 0.35f;
-                AddSprite(shine, circle, new Color(1f, 0.95f, 0.7f), 7);
+                AddSprite(shine, circle, new Color(1f, 0.95f, 0.7f), 7).enabled = coinArt == null;
                 coin.AddComponent<CircleCollider2D>().radius = 0.6f;
                 var c = coin.AddComponent<CoinPickup>();
                 var so = new SerializedObject(c);
                 so.FindProperty("id").intValue = coinCounter++;
+                so.FindProperty("visual").objectReferenceValue = visual.transform;
                 so.ApplyModifiedPropertiesWithoutUndo();
             }
         }
@@ -723,7 +800,9 @@ namespace PopJet.EditorTools
             tube.transform.SetParent(barrel.transform, false);
             tube.transform.localPosition = new Vector3(0f, 0.55f, 0f);
             tube.transform.localScale = new Vector3(0.45f, 0.7f, 1f);
-            AddSprite(tube, square, new Color(0.95f, 0.45f, 0.55f), 3);
+            var tubeSr = AddSprite(tube, square, new Color(0.95f, 0.45f, 0.55f), 3);
+            var cannonArt = ArtSprite("Cannon");
+            if (cannonArt != null) { tubeSr.enabled = false; AddArtFit(barrel.transform, cannonArt, new Vector2(0.75f, 1.05f), 3, new Vector2(0f, 0.45f)); }
             for (int i = 0; i < 4; i++)
             {
                 var d = new GameObject("AimDot_" + i);
@@ -747,6 +826,8 @@ namespace PopJet.EditorTools
             vis.transform.SetParent(go.transform, false);
             vis.transform.localScale = new Vector3(size.x, size.y, 1f);
             var sr = AddSprite(vis, roundRect != null ? roundRect : square, new Color(0.85f, 0.9f, 1f), 2);
+            var pillowArt = ArtSprite("Pillow");
+            if (pillowArt != null) { sr.enabled = false; AddArtFit(go.transform, pillowArt, size * new Vector2(1.15f, 1.6f), 2, Vector2.zero); }
             if (roundRect != null) { sr.drawMode = SpriteDrawMode.Sliced; sr.size = Vector2.one; }
             var col = go.AddComponent<BoxCollider2D>();
             col.size = size;
@@ -802,6 +883,8 @@ namespace PopJet.EditorTools
             var body = new GameObject("Body");
             body.transform.SetParent(go.transform, false);
             var bodySr = AddSprite(body, circle, new Color(0.55f, 0.5f, 0.6f), 4);
+            var catArt = ArtSprite("Cat_Sleep");
+            var catAwake = ArtSprite("Cat_Awake");
             body.transform.localScale = new Vector3(0.8f, 0.55f, 1f);
             var earL = Ear(body.transform, -0.25f);
             var earR = Ear(body.transform, 0.25f);
@@ -822,7 +905,28 @@ namespace PopJet.EditorTools
             warn.transform.localScale = Vector3.one * (2f * 2.25f);
             AddSprite(warn, circle, new Color(1f, 0.66f, 0.1f, 0.06f), -1);
             var cat = go.AddComponent<Cat>();
+            if (catArt != null)
+            {
+                bodySr.enabled = false;
+                earL.GetComponent<SpriteRenderer>().enabled = false;
+                earR.GetComponent<SpriteRenderer>().enabled = false;
+                // Cat.cs đặt body.localScale = 1 lúc chạy, nên body để scale 1 và hình tự mang cỡ 1.2 x 1.1.
+                body.transform.localScale = Vector3.one;
+                var ca = new GameObject("Art");
+                ca.transform.SetParent(body.transform, false);
+                ca.transform.localPosition = new Vector3(0f, 0.1f, 0f);
+                ca.transform.localScale = new Vector3(1.2f / catArt.bounds.size.x, 1.1f / catArt.bounds.size.y, 1f);
+                bodySr = Outlined(AddSprite(ca, catArt, Color.white, 4));
+            }
             SetRefs(cat, ("body", body.transform), ("earL", earL), ("earR", earR), ("zzz", zzz.transform), ("bodyRenderer", bodySr));
+            if (catArt != null) SetRefs(cat, ("sleepSprite", catArt), ("awakeSprite", catAwake));
+            if (catArt != null)
+            {
+                // Hình thật đã có màu: lúc ngủ không tô xám.
+                var cso = new SerializedObject(cat);
+                cso.FindProperty("sleepColor").colorValue = Color.white;
+                cso.ApplyModifiedPropertiesWithoutUndo();
+            }
         }
 
         static Transform Ear(Transform body, float x)
@@ -835,8 +939,44 @@ namespace PopJet.EditorTools
             return e.transform;
         }
 
+        /// <summary>
+        /// Cột mốc (§6 #9): vùng chạm tròn bán kính 0.55 ở pos (cũng là chỗ bóng xuất hiện lại), cột cờ sát bên trái.
+        /// chaser được đẩy tới chaserProgress (đơn vị world dọc đường ray) khi chơi lại từ cột mốc.
+        /// </summary>
+        static void CheckpointAt(Transform level, Vector2 pos, PathMover chaser, float chaserProgress)
+        {
+            var go = new GameObject("Checkpoint");
+            go.transform.SetParent(level);
+            go.transform.position = pos;
+            var c = go.AddComponent<CircleCollider2D>();
+            c.radius = 0.55f;
+            c.isTrigger = true;
+
+            var pole = new GameObject("Pole");
+            pole.transform.SetParent(go.transform, false);
+            pole.transform.localPosition = new Vector3(-0.6f, 0f, 0f);
+            pole.transform.localScale = new Vector3(0.06f, 1.0f, 1f);
+            AddSprite(pole, square, new Color(0.55f, 0.42f, 0.31f), 3);
+            var flag = new GameObject("Flag");
+            flag.transform.SetParent(go.transform, false);
+            flag.transform.localPosition = new Vector3(-0.38f, 0.32f, 0f);
+            flag.transform.localRotation = Quaternion.Euler(0f, 0f, -90f); // tam giác chĩa sang phải
+            flag.transform.localScale = new Vector3(0.36f, 0.42f, 1f);
+            var flagSr = AddSprite(flag, triangle, Color.white, 4);
+            // Vòng mờ đánh dấu chỗ chạm.
+            var ring = new GameObject("Marker");
+            ring.transform.SetParent(go.transform, false);
+            ring.transform.localScale = Vector3.one * 1.1f;
+            AddSprite(ring, circle, new Color(0.114f, 0.62f, 0.459f, 0.12f), 1);
+
+            var cp = go.AddComponent<Checkpoint>();
+            SetRefs(cp, ("flag", flagSr));
+            if (chaser != null) SetArray(cp, "chasers", new Object[] { chaser });
+            SetFloat(cp, "chaserProgress", chaserProgress);
+        }
+
         /// <summary>Máy hút bụi (§5.2 #12): thân chạy lên theo PathMover, vùng hút ForceField, miệng HardHazard (SuckedIn).</summary>
-        static void Vacuum(Transform level, Vector2 pos, Vector2 travel, float speed)
+        static PathMover Vacuum(Transform level, Vector2 pos, Vector2 travel, float speed)
         {
             var go = new GameObject("Vacuum");
             go.transform.SetParent(level);
@@ -854,7 +994,9 @@ namespace PopJet.EditorTools
             var body = new GameObject("Body");
             body.transform.SetParent(go.transform, false);
             body.transform.localScale = new Vector3(5.4f, 1.6f, 1f);
-            AddSprite(body, square, new Color(0.35f, 0.3f, 0.4f), 8);
+            var vacSr = AddSprite(body, square, new Color(0.35f, 0.3f, 0.4f), 8);
+            var vacArt = ArtSprite("Vacuum");
+            if (vacArt != null) { vacSr.enabled = false; AddArtFit(go.transform, vacArt, new Vector2(5.6f, 2.4f), 8, new Vector2(0f, 0.15f)); }
             for (int i = 0; i < 6; i++)
             {
                 // Sọc cảnh báo vàng cam ở miệng (nhóm D).
@@ -863,7 +1005,7 @@ namespace PopJet.EditorTools
                 stripe.transform.localPosition = new Vector3(-2.25f + i * 0.9f, 0.9f, 0f);
                 stripe.transform.localRotation = Quaternion.Euler(0f, 0f, 30f);
                 stripe.transform.localScale = new Vector3(0.35f, 0.3f, 1f);
-                AddSprite(stripe, square, HazardColor, 9);
+                AddSprite(stripe, square, HazardColor, 9).enabled = vacArt == null;
             }
             var mouth = new GameObject("Mouth");
             mouth.transform.SetParent(go.transform, false);
@@ -885,6 +1027,145 @@ namespace PopJet.EditorTools
             haze.transform.SetParent(suction.transform, false);
             haze.transform.localScale = Vector3.one * 6f;
             AddSprite(haze, dot, new Color(0.8f, 0.85f, 1f, 0.12f), 1);
+            return mover;
+        }
+
+        /// <summary>Dây chấm (SwitchWire) đi qua các điểm, từ công tắc tới cửa. Chấm cách nhau 0.22.</summary>
+        static void Wire(Transform level, ButtonSwitch source, params Vector2[] points)
+        {
+            var go = new GameObject("Wire");
+            go.transform.SetParent(level);
+            var dots = new List<Object>();
+            for (int s = 0; s + 1 < points.Length; s++)
+            {
+                Vector2 a = points[s], b = points[s + 1];
+                int n = Mathf.Max(1, Mathf.RoundToInt(Vector2.Distance(a, b) / 0.22f));
+                for (int i = s == 0 ? 0 : 1; i <= n; i++)
+                {
+                    var d = new GameObject("Dot_" + dots.Count);
+                    d.transform.SetParent(go.transform, false);
+                    d.transform.position = Vector2.Lerp(a, b, i / (float)n);
+                    d.transform.localScale = Vector3.one * 0.09f;
+                    dots.Add(AddSprite(d, circle, new Color(1f, 0.85f, 0.35f, 0.22f), -1));
+                }
+            }
+            var wire = go.AddComponent<SwitchWire>();
+            SetRefs(wire, ("source", source));
+            SetArray(wire, "dots", dots.ToArray());
+        }
+
+        /// <summary>Bàn tay chỉ ngón trỏ lên (tutorial 1-1): đầu ngón ở mép trên giữa ảnh.</summary>
+        static float HandShape(float x, float y, int s)
+        {
+            var p = new Vector2(x / s, y / s);
+            float d = Capsule(p, new Vector2(0.5f, 0.52f), new Vector2(0.5f, 0.9f), 0.085f);           // ngón trỏ
+            d = Mathf.Min(d, RoundBox(p, new Vector2(0.53f, 0.3f), new Vector2(0.17f, 0.17f), 0.08f));  // lòng bàn tay
+            d = Mathf.Min(d, Capsule(p, new Vector2(0.34f, 0.34f), new Vector2(0.24f, 0.5f), 0.07f));   // ngón cái
+            d = Mathf.Min(d, Capsule(p, new Vector2(0.63f, 0.42f), new Vector2(0.63f, 0.5f), 0.07f));   // ngón giữa gập
+            d = Mathf.Min(d, Capsule(p, new Vector2(0.73f, 0.38f), new Vector2(0.73f, 0.44f), 0.065f)); // ngón áp út gập
+            return -d * s + 0.5f;
+        }
+
+        /// <summary>Lá hình thấu kính dài theo trục X (giao của hai hình tròn).</summary>
+        static float LeafShape(float x, float y, int s)
+        {
+            var p = new Vector2(x / s, y / s);
+            float d = Mathf.Max((p - new Vector2(0.5f, 0.2f)).magnitude - 0.45f, (p - new Vector2(0.5f, 0.8f)).magnitude - 0.45f);
+            return -d * s + 0.5f;
+        }
+
+        static float Capsule(Vector2 p, Vector2 a, Vector2 b, float r)
+        {
+            Vector2 ab = b - a;
+            float t = Mathf.Clamp01(Vector2.Dot(p - a, ab) / ab.sqrMagnitude);
+            return (p - (a + ab * t)).magnitude - r;
+        }
+
+        static float RoundBox(Vector2 p, Vector2 c, Vector2 half, float r)
+        {
+            Vector2 q = new Vector2(Mathf.Abs(p.x - c.x), Mathf.Abs(p.y - c.y)) - half + new Vector2(r, r);
+            return new Vector2(Mathf.Max(q.x, 0f), Mathf.Max(q.y, 0f)).magnitude + Mathf.Min(Mathf.Max(q.x, q.y), 0f) - r;
+        }
+
+        // ---- Âm thanh placeholder §11.2 ----
+
+        /// <summary>Tiếng "pốp" nhỏ của nút: sine tụt cao độ nhanh.</summary>
+        static AudioClip MakeBlipClip(string name, float hz, float seconds)
+        {
+            int n = (int)(seconds * Rate);
+            var d = new float[n];
+            double ph = 0;
+            for (int i = 0; i < n; i++)
+            {
+                float t = (float)i / n;
+                ph += 2 * System.Math.PI * hz * (1f - 0.5f * t) / Rate;
+                d[i] = (float)System.Math.Sin(ph) * (1f - t) * (1f - t) * 0.5f;
+            }
+            return WriteWav(name, d);
+        }
+
+        /// <summary>Tiếng chuông: các họa âm tắt dần theo hàm mũ.</summary>
+        static AudioClip MakeBellClip(string name, float hz, float seconds)
+        {
+            int n = (int)(seconds * Rate);
+            var d = new float[n];
+            for (int i = 0; i < n; i++)
+            {
+                float t = (float)i / Rate;
+                float env = Mathf.Exp(-t * 6f) * Mathf.Min(1f, t * 400f);
+                float v = Mathf.Sin(2f * Mathf.PI * hz * t) + 0.4f * Mathf.Sin(2f * Mathf.PI * hz * 2.76f * t) * Mathf.Exp(-t * 10f);
+                d[i] = v * env * 0.3f;
+            }
+            return WriteWav(name, d);
+        }
+
+        /// <summary>"Cót két" cao su: sóng răng cưa rung tần số.</summary>
+        static AudioClip MakeCreakClip(string name)
+        {
+            const float seconds = 0.2f;
+            int n = (int)(seconds * Rate);
+            var d = new float[n];
+            double ph = 0;
+            for (int i = 0; i < n; i++)
+            {
+                float t = (float)i / n;
+                float f = 520f + 180f * Mathf.Sin(t * 40f);
+                ph += f / Rate;
+                float saw = (float)(ph - System.Math.Floor(ph)) * 2f - 1f;
+                d[i] = saw * Mathf.Sin(t * Mathf.PI) * 0.18f;
+            }
+            return WriteWav(name, d);
+        }
+
+        /// <summary>Băng keo "rẹt" (nhiễu quét) rồi "chụt" (sine ngắn).</summary>
+        static AudioClip MakeTapeClip(string name, int seed)
+        {
+            var rnd = new System.Random(seed);
+            int n1 = (int)(0.11f * Rate), n2 = (int)(0.05f * Rate);
+            var d = new float[n1 + n2];
+            float lp = 0f;
+            for (int i = 0; i < n1; i++)
+            {
+                float t = (float)i / n1;
+                lp += ((float)(rnd.NextDouble() * 2 - 1) - lp) * Mathf.Lerp(0.2f, 0.7f, t);
+                d[i] = lp * Mathf.Sin(t * Mathf.PI) * 0.5f;
+            }
+            for (int i = 0; i < n2; i++)
+            {
+                float t = (float)i / n2;
+                d[n1 + i] = Mathf.Sin(2f * Mathf.PI * Mathf.Lerp(900f, 500f, t) * i / Rate) * (1f - t) * 0.35f;
+            }
+            return WriteWav(name, d);
+        }
+
+        /// <summary>Thêm con "Art" co giãn vừa khung size (đơn vị world của cha).</summary>
+        static SpriteRenderer AddArtFit(Transform parent, Sprite sprite, Vector2 size, int order, Vector2 localPos)
+        {
+            var go = new GameObject("Art");
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = localPos;
+            go.transform.localScale = new Vector3(size.x / sprite.bounds.size.x, size.y / sprite.bounds.size.y, 1f);
+            return Outlined(AddSprite(go, sprite, Color.white, order));
         }
 
         static PhysicsMaterial2D MakePillowMaterial()
@@ -943,6 +1224,7 @@ namespace PopJet.EditorTools
             door.transform.localScale = new Vector3(1.75f, 0.25f, 1f);
             AddSprite(door, square, new Color(0.6f, 0.4f, 0.25f), 2);
             door.AddComponent<BoxCollider2D>();
+            DoorArt(door, new Vector2(1.75f, 0.25f));
             var doorComp = door.AddComponent<Door>();
             SetValue(doorComp, "openOffset", new Vector2(1.9f, 0f));
 
@@ -953,8 +1235,18 @@ namespace PopJet.EditorTools
             button.transform.localScale = new Vector3(0.25f, 0.9f, 1f);
             AddSprite(button, square, new Color(0.9f, 0.25f, 0.45f), 2);
             button.AddComponent<BoxCollider2D>().isTrigger = true;
+            var buttonArt = ArtSprite("Button");
+            if (buttonArt != null)
+            {
+                // Nút gắn trên tường trái: xoay -90 cho mặt nút đỏ quay sang phải, đế áp sát tường (x = -2.8).
+                button.GetComponent<SpriteRenderer>().enabled = false;
+                float depth = 0.9f * buttonArt.bounds.size.y / buttonArt.bounds.size.x;
+                AddArtWorld(button.transform, buttonArt, new Vector2(0.9f, depth), -90f, 2, new Vector2(-2.8f + depth * 0.5f + 2.65f, 0f));
+            }
             var sw = button.AddComponent<ButtonSwitch>();
             SetArray(sw, "doors", new Object[] { doorComp });
+            // Dây mờ nối nút với cửa (§8.4 màn 1-8): men tường trái xuống ngang sàn buồng đích rồi sang mép cửa.
+            Wire(level, sw, new Vector2(-2.45f, 3.6f), new Vector2(-2.45f, 1.65f), new Vector2(0.82f, 1.65f));
 
             Goal(level, new Vector2(1.95f, 3.7f), 1.1f);
             // Sao lệch khỏi đường chính, ở góc trái dưới nút (phải đi vòng qua quạt).

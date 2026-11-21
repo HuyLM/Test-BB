@@ -25,6 +25,9 @@ namespace PopJet
 
         /// <summary>Font TMP dùng chung. Để trống thì lấy font mặc định trong TMP Settings.</summary>
         public static TMP_FontAsset Font;
+        /// <summary>Font tiêu đề (Baloo 2), dùng cho chữ từ cỡ TitleSize trở lên. Để trống thì dùng Font.</summary>
+        public static TMP_FontAsset TitleFont;
+        public const float TitleSize = 80f;
         /// <summary>Material TMP có viền (preset dùng chung, builder tạo ở Art/TMP_Outline.mat).</summary>
         public static Material OutlineMaterial;
         /// <summary>Sprite bo góc (9-slice) cho nút và bảng.</summary>
@@ -72,6 +75,7 @@ namespace PopJet
         {
             var t = Rect(name, parent).gameObject.AddComponent<TextMeshProUGUI>();
             if (Font != null) t.font = Font;
+            if (TitleFont != null && size >= TitleSize) t.font = TitleFont;
             t.text = text;
             t.fontSize = size;
             t.fontStyle = FontStyles.Bold;
@@ -81,7 +85,8 @@ namespace PopJet
             t.textWrappingMode = TextWrappingModes.NoWrap;
             t.overflowMode = TextOverflowModes.Overflow;
             // Dùng material preset có sẵn viền: đặt outlineWidth lúc chạy tạo material instance và lỗi khi chữ chưa vẽ lần nào.
-            if (outline && OutlineMaterial != null) t.fontSharedMaterial = OutlineMaterial;
+            // Material viền dựng theo atlas của Font: chỉ gán khi nhãn dùng đúng font đó.
+            if (outline && OutlineMaterial != null && (Font == null || t.font == Font)) t.fontSharedMaterial = OutlineMaterial;
             return t;
         }
 
@@ -99,6 +104,40 @@ namespace PopJet
             var label = Label("Label", img.transform, text, fontSize, Ink);
             Stretch(label.rectTransform);
             return btn;
+        }
+
+        /// <summary>
+        /// Nút tròn chỉ có icon (art AI: đĩa giấy + hình mực). Vẫn có Label ẩn để code đổi chữ không lỗi.
+        /// </summary>
+        public static Button IconButton(string name, Transform parent, Sprite icon, Action onClick)
+        {
+            var img = Image(name, parent, icon, Color.white, true);
+            img.preserveAspect = true;
+            var btn = img.gameObject.AddComponent<Button>();
+            btn.targetGraphic = img;
+            if (onClick != null) btn.onClick.AddListener(() => onClick());
+            img.gameObject.AddComponent<PuffyButton>();
+            var label = Label("Label", img.transform, "", 40f, Ink);
+            Stretch(label.rectTransform);
+            label.gameObject.SetActive(false);
+            return btn;
+        }
+
+        /// <summary>Thêm icon tròn ở mép trái nút chữ (cao 78% nút), chữ dịch sang phải nhường chỗ.</summary>
+        public static Button WithIcon(Button b, Sprite icon)
+        {
+            if (b == null || icon == null) return b;
+            var img = Image("Icon", b.transform, icon, Color.white);
+            img.preserveAspect = true;
+            var rt = img.rectTransform;
+            rt.anchorMin = new Vector2(0f, 0.11f);
+            rt.anchorMax = new Vector2(0f, 0.89f);
+            rt.pivot = new Vector2(0f, 0.5f);
+            rt.anchoredPosition = new Vector2(16f, 0f);
+            img.gameObject.AddComponent<AspectRatioFitter>().aspectMode = AspectRatioFitter.AspectMode.HeightControlsWidth;
+            var label = ButtonLabel(b);
+            if (label != null) label.rectTransform.offsetMin = new Vector2(60f, label.rectTransform.offsetMin.y);
+            return b;
         }
 
         public static TextMeshProUGUI ButtonLabel(Button b) => b.GetComponentInChildren<TextMeshProUGUI>(true);
@@ -153,6 +192,7 @@ namespace PopJet
         {
             target = 0.92f;
             Haptics.Selection();
+            GameAudio.UiPop();
         }
 
         public void OnPointerUp(PointerEventData e) { target = 1f; velocity += 3f; }
@@ -173,11 +213,35 @@ namespace PopJet
     public class PopupAnim : MonoBehaviour
     {
         float t;
+        float closeT = -1f;
+        GameObject closeRoot;
 
-        void OnEnable() { t = 0f; transform.localScale = Vector3.one * 0.01f; }
+        /// <summary>Đang "xì hơi" để đóng.</summary>
+        public bool IsClosing => closeT >= 0f;
+
+        void OnEnable() { t = 0f; closeT = -1f; transform.localScale = Vector3.one * 0.01f; }
+
+        /// <summary>"Xì hơi" khi tắt (§10.1): phồng nhẹ 1.05 rồi xẹp về 0 trong 0.16 giây, xong thì tắt root.</summary>
+        public void Deflate(GameObject root)
+        {
+            closeRoot = root;
+            closeT = 0f;
+        }
 
         void Update()
         {
+            if (closeT >= 0f)
+            {
+                closeT += Time.unscaledDeltaTime;
+                float c = closeT < 0.05f ? Mathf.Lerp(1f, 1.05f, closeT / 0.05f) : Mathf.Lerp(1.05f, 0.01f, (closeT - 0.05f) / 0.11f);
+                transform.localScale = new Vector3(c, c, 1f);
+                if (closeT >= 0.16f)
+                {
+                    closeT = -1f;
+                    if (closeRoot != null) closeRoot.SetActive(false);
+                }
+                return;
+            }
             if (t >= 0.25f) return;
             t += Time.unscaledDeltaTime;
             float s = t < 0.16f ? Mathf.Lerp(0.01f, 1.08f, t / 0.16f) : Mathf.Lerp(1.08f, 1f, (t - 0.16f) / 0.09f);

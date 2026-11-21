@@ -35,6 +35,18 @@ namespace PopJet
         public const string TapToStart = "Tap to start";
         public const string AllDone = "More levels coming soon!";
 
+        // Gợi ý (GDD §3.5, §7.2)
+        public const string Hint = "Hint";
+        public const string HintInvite = "Need a hint?";
+
+        // Tutorial (GDD §8.4)
+        public const string CancelTip = "Release in the middle to cancel";
+        public static string ParIntro(int par) => par == 1 ? "Par 1: finish in 1 poke" : $"Par {par}: finish in {par} pokes or fewer";
+
+        // Cột mốc (GDD §6 #9)
+        public const string Checkpoint = "Checkpoint!";
+        public const string RestartLevel = "Restart Level";
+
         // Mục tiêu đầu màn (GDD §10.3)
         public const string GoalReach = "Reach the goal";
         public const string GoalStar = "Grab the star";

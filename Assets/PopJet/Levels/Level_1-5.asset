@@ -18,6 +18,15 @@ MonoBehaviour:
   prefab: {fileID: 4621184092991149189, guid: 6f58cb3b2bfa5134dbec14908393d8c6, type: 3}
   par: 3
   hint: 
+  tutorial: 0
   notes: "Gai v\xE0 keo: thanh gai ch\u1EAFn gi\u1EEFa, keo ngay ph\xEDa sau. \u0110i
     l\xE1ch hai b\xEAn khe 1.2 ho\u1EB7c lao th\u1EB3ng qua gai r\u1ED3i v\xE1. Par
     t\u1EA1m."
+  solution:
+    sampleInterval: 0.05
+    fixedDeltaTime: 0.02
+    path: []
+    steps: []
+    pokes: 0
+    totalTicks: 0
+    recordedAt: 

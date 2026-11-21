@@ -18,6 +18,15 @@ MonoBehaviour:
   prefab: {fileID: 2512902287299697482, guid: afeccec3bf4728c4294b72d546f0ad6a, type: 3}
   par: 3
   hint: 
+  tutorial: 0
   notes: "G\u1ED1i b\xF4ng (\xA76 #4): g\u1ED1i gi\u1EEFa m\xE0n h\xFAt c\xFA va,
     l\xE0m \u0111i\u1EC3m d\u1EEBng \u0111\u1EC3 ng\u1EAFm ti\u1EBFp. S\xE0n v\xE0
     tr\u1EA7n ph\u1EA3i c\xF3 gai. Par t\u1EA1m."
+  solution:
+    sampleInterval: 0.05
+    fixedDeltaTime: 0.02
+    path: []
+    steps: []
+    pokes: 0
+    totalTicks: 0
+    recordedAt: 

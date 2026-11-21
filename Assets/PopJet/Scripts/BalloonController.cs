@@ -81,6 +81,8 @@ namespace PopJet
         public event Action GameStarted;
         /// <summary>Sau mỗi cú chọc thành công, kèm tổng số cú chọc từ đầu màn (để tính Par).</summary>
         public event Action<int> Poked;
+        /// <summary>Pháo giấy vừa bắn bóng ra, kèm vận tốc (SolutionRecorder ghi lại để phát lại đúng y hệt).</summary>
+        public event Action<Vector2> Launched;
 
         struct Jet
         {
@@ -98,6 +100,9 @@ namespace PopJet
         CircleCollider2D circle;
         float air;
         float baseScale;
+        // Thời gian vật lý tính từ lúc vào màn (cộng trong FixedUpdate). Luật về thời gian dùng biến này thay cho
+        // Time.time để phát lại lời giải ra y hệt (Time.time tính từ lúc mở app, khác nhau giữa các lần chơi).
+        float simTime;
         float lastLeakTime = -99f;
         int nextJetId;
         int pokeCount;
@@ -201,7 +206,8 @@ namespace PopJet
         public bool TryVent(Vector2 flyDir)
         {
             if (!CanAim || flyDir.sqrMagnitude < 1e-6f) return false;
-            flyDir.Normalize();
+            // Chỉ chuẩn hóa khi chưa là vector đơn vị: hướng đã ghi trong lời giải phải phát lại đúng từng bit.
+            if (Mathf.Abs(flyDir.sqrMagnitude - 1f) > 1e-4f) flyDir.Normalize();
             jets.Add(new Jet
             {
                 id = nextJetId++,
@@ -232,10 +238,12 @@ namespace PopJet
         {
             if (empty || goal || held) return false;
             if (LeakCount >= maxLeaks) return false;
-            if (Time.time - lastLeakTime < leakCooldown) return false;
-            lastLeakTime = Time.time;
+            if (simTime - lastLeakTime < leakCooldown) return false;
+            lastLeakTime = simTime;
 
-            Vector2 outward = hitPoint - Center;
+            // Vị trí vật lý thật: transform có thể đang nội suy theo khung hình (Interpolate), không lặp lại được.
+            Vector2 center = rb.position;
+            Vector2 outward = hitPoint - center;
             if (outward.sqrMagnitude < 1e-6f) outward = Vector2.up;
             outward.Normalize();
 
@@ -250,7 +258,7 @@ namespace PopJet
                 airCost = leakAirCost,
                 isLeak = true
             });
-            LeakAdded?.Invoke(Center + outward * Radius, flyDir);
+            LeakAdded?.Invoke(center + outward * Radius, flyDir);
             return true;
         }
 
@@ -266,6 +274,18 @@ namespace PopJet
         {
             if (empty || goal) return;
             air = Mathf.Clamp01(air + amount);
+            ApplyScale();
+        }
+
+        /// <summary>
+        /// Chơi lại từ cột mốc (GDD §6 #9): đặt lượng khí và số cú chọc như lúc chạm cột mốc.
+        /// LevelLoader gọi trong Start, trước bước vật lý đầu tiên. Bóng vẫn chờ cú chọc đầu như mở màn.
+        /// </summary>
+        public void RestoreRun(float airLevel, int pokes)
+        {
+            if (empty || goal) return;
+            air = Mathf.Clamp01(airLevel);
+            pokeCount = Mathf.Max(0, pokes);
             ApplyScale();
         }
 
@@ -294,6 +314,7 @@ namespace PopJet
             rb.bodyType = RigidbodyType2D.Dynamic;
             StartGame();
             SetVelocity(velocity);
+            Launched?.Invoke(velocity);
         }
 
         public void ReachGoal()
@@ -342,6 +363,7 @@ namespace PopJet
 
         void FixedUpdate()
         {
+            simTime += Time.fixedDeltaTime;
             if (empty || goal || held) return;
 
             float dt = Time.fixedDeltaTime;

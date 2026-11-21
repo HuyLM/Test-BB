@@ -31,6 +31,7 @@ namespace PopJet
         float failShownAt = -1f;
         float messageSeconds;
         bool stuck;
+        bool parGold, parPulse;
 
         void Awake()
         {
@@ -67,6 +68,7 @@ namespace PopJet
                 session.StarCollected += OnStar;
                 session.Completed += OnCompleted;
             }
+            Checkpoint.Activated += OnCheckpoint;
         }
 
         void OnDisable()
@@ -82,12 +84,28 @@ namespace PopJet
                 session.StarCollected -= OnStar;
                 session.Completed -= OnCompleted;
             }
+            Checkpoint.Activated -= OnCheckpoint;
         }
 
         void Start()
         {
-            SetPokes(0); // Par của màn chỉ có sau khi LevelLoader chạy
+            // Par của màn chỉ có sau khi LevelLoader chạy; chơi lại từ cột mốc thì đã có sẵn vài cú chọc.
+            SetPokes(balloon != null ? balloon.PokeCount : 0);
         }
+
+        /// <summary>
+        /// Làm nổi phần Par trên nhãn số cú chọc (tutorial màn 1-9, GDD §8.4): gold = chữ Par màu vàng,
+        /// pulse = nhãn nhún nhẹ.
+        /// </summary>
+        public void SetParHighlight(bool gold, bool pulse)
+        {
+            parGold = gold;
+            parPulse = pulse;
+            if (!pulse && pokeLabel != null) pokeLabel.rectTransform.localScale = Vector3.one;
+            SetPokes(balloon != null ? balloon.PokeCount : 0);
+        }
+
+        void OnCheckpoint(Checkpoint checkpoint) { ShowMessage(GameText.Checkpoint, 0.9f); }
 
         void OnRetry()
         {
@@ -97,7 +115,9 @@ namespace PopJet
         void SetPokes(int count)
         {
             if (pokeLabel == null) return;
-            pokeLabel.text = session != null ? GameText.Pokes(count, session.Par) : GameText.Pokes(count);
+            if (session == null) pokeLabel.text = GameText.Pokes(count);
+            else if (parGold) pokeLabel.text = GameText.Pokes(count) + " / <color=#FFD23F>Par " + session.Par + "</color>";
+            else pokeLabel.text = GameText.Pokes(count, session.Par);
             // Vượt Par thì chữ chuyển cam: sao Par của lượt này đã mất.
             pokeLabel.color = session != null && count > session.Par ? new Color(1f, 0.541f, 0f) : Color.white;
         }
@@ -163,6 +183,8 @@ namespace PopJet
             }
             if (stuck && retryRect != null)
                 retryRect.localScale = Vector3.one * (1f + 0.08f * Mathf.Sin(now * 6f));
+            if (parPulse && pokeLabel != null)
+                pokeLabel.rectTransform.localScale = Vector3.one * (1f + 0.07f * Mathf.Sin(now * 5f));
         }
     }
 }

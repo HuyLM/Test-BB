@@ -14,6 +14,7 @@ namespace PopJet
 
         void Awake() { GetComponent<Collider2D>().isTrigger = true; }
 
+        public bool IsOn => isOn;
         public void SetOn(bool value) { isOn = value; }
         public void Toggle() { isOn = !isOn; }
 

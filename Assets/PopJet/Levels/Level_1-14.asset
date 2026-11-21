@@ -18,5 +18,14 @@ MonoBehaviour:
   prefab: {fileID: 3771409719494724633, guid: e23642c27d2fa314da17ced1015734f4, type: 3}
   par: 2
   hint: 
+  tutorial: 0
   notes: "M\xE0n ngh\u1EC9 (\xA78.2 m\xE0n 14): d\u1EC5, \u0111\u1EB9p, nhi\u1EC1u
     xu. Par t\u1EA1m."
+  solution:
+    sampleInterval: 0.05
+    fixedDeltaTime: 0.02
+    path: []
+    steps: []
+    pokes: 0
+    totalTicks: 0
+    recordedAt: 

@@ -18,4 +18,13 @@ MonoBehaviour:
   prefab: {fileID: 3065083937876410826, guid: b84d8e4b1d4f74349a1d60b6c003e6bb, type: 3}
   par: 2
   hint: 
+  tutorial: 0
   notes: "M\xE0n ngh\u1EC9: r\u1ED9ng, nhi\u1EC1u xu, \u0111\xEDch to. Par t\u1EA1m."
+  solution:
+    sampleInterval: 0.05
+    fixedDeltaTime: 0.02
+    path: []
+    steps: []
+    pokes: 0
+    totalTicks: 0
+    recordedAt: 

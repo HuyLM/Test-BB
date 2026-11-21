@@ -18,6 +18,15 @@ MonoBehaviour:
   prefab: {fileID: 1040542436610342909, guid: f8f7d5bfd07b35a4da5d919c2186951e, type: 3}
   par: 2
   hint: You fly away from the needle
+  tutorial: 0
   notes: "Gi\u1EDBi thi\u1EC7u: \u0111\xEDch ch\xE9o l\xEAn b\xEAn ph\u1EA3i. L\u1EDDi
     gi\u1EA3i: 2 c\xFA ch\u1ECDc ch\xE9o (kim ch\u0129a xu\u1ED1ng tr\xE1i). Par
     t\u1EA1m."
+  solution:
+    sampleInterval: 0.05
+    fixedDeltaTime: 0.02
+    path: []
+    steps: []
+    pokes: 0
+    totalTicks: 0
+    recordedAt: 

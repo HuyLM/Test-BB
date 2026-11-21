@@ -429,6 +429,8 @@ namespace PopJet.EditorTools
             go.transform.localScale = new Vector3(size.x, size.y, 1f);
             AddSprite(go, square, color, 0);
             go.AddComponent<BoxCollider2D>();
+            // Art AI: dải bìa các-tông; kệ (màu gỗ) tô ấm hơn tường một chút.
+            WallArt(go, size, color == ShelfColor ? new Color(1f, 0.9f, 0.8f) : Color.white);
         }
 
         static void SetRefs(Object target, params (string field, Object value)[] refs)

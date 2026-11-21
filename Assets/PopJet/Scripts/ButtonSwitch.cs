@@ -18,6 +18,9 @@ namespace PopJet
 
         bool pressed;
 
+        /// <summary>Nút đang được bấm (dây nối SwitchWire sáng lên).</summary>
+        public bool IsPressed => pressed;
+
         void Awake() { GetComponent<Collider2D>().isTrigger = true; }
 
         void OnTriggerEnter2D(Collider2D other)

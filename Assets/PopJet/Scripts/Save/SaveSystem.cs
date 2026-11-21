@@ -25,6 +25,14 @@ namespace PopJet
         public bool MusicOn => musicVolume > 0f;
     }
 
+    /// <summary>Những gợi ý tutorial người chơi đã học xong, để thôi nhắc (GDD §8.4).</summary>
+    [Serializable]
+    public class TutorialProgress
+    {
+        /// <summary>Đã hủy ngắm thành công ít nhất một lần: thôi hiện "Release in the middle to cancel".</summary>
+        public bool cancelLearned;
+    }
+
     /// <summary>Toàn bộ dữ liệu lưu của người chơi (GDD §15.7, phần 2.3).</summary>
     [Serializable]
     public class SaveData
@@ -36,6 +44,7 @@ namespace PopJet
         public int lastLevelIndex;
         public int coins;
         public SettingsData settings = new SettingsData();
+        public TutorialProgress tutorial = new TutorialProgress();
     }
 
     /// <summary>
@@ -176,6 +185,7 @@ namespace PopJet
             data = TryRead(FilePath) ?? TryRead(FilePath + ".bak") ?? new SaveData();
             if (data.levels == null) data.levels = new List<LevelRecordEntry>();
             if (data.settings == null) data.settings = new SettingsData();
+            if (data.tutorial == null) data.tutorial = new TutorialProgress();
             foreach (var e in data.levels)
             {
                 if (e.record == null) e.record = new LevelRecord();

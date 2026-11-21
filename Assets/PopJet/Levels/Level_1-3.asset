@@ -18,6 +18,15 @@ MonoBehaviour:
   prefab: {fileID: 4104431286330909812, guid: 1c920bb4f81ba974b9af06014efc904a, type: 3}
   par: 3
   hint: Every poke costs air
+  tutorial: 0
   notes: "Gi\u1EDBi thi\u1EC7u kh\xED c\xF3 h\u1EA1n: k\u1EC7 ch\u1EAFn b\xEAn tr\xE1i,
     ph\u1EA3i v\xF2ng qua \u0111\u1EA7u k\u1EC7. L\u1EDDi gi\u1EA3i: l\xEAn ph\u1EA3i,
     l\xEAn, sang tr\xE1i. Par t\u1EA1m."
+  solution:
+    sampleInterval: 0.05
+    fixedDeltaTime: 0.02
+    path: []
+    steps: []
+    pokes: 0
+    totalTicks: 0
+    recordedAt: 

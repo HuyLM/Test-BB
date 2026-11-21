@@ -18,6 +18,15 @@ MonoBehaviour:
   prefab: {fileID: 4518351588189220780, guid: bf72228a8059e944b97917e917875bb6, type: 3}
   par: 3
   hint: Don't wake the cat
+  tutorial: 0
   notes: "M\xE8o ng\u1EE7 (\xA75.2 #20): m\xE8o tr\xEAn k\u1EC7 tr\xE1i, \u0111\xEDch
     ph\xEDa tr\xEAn m\xE8o. Ph\u1EA3i l\xEAn t\u1EEB b\xEAn ph\u1EA3i r\u1ED3i ch\u1ECDc
     ngang v\xE0o \u0111\xEDch, tr\xE1nh b\xE1n k\xEDnh 1.8. Par t\u1EA1m."
+  solution:
+    sampleInterval: 0.05
+    fixedDeltaTime: 0.02
+    path: []
+    steps: []
+    pokes: 0
+    totalTicks: 0
+    recordedAt: 

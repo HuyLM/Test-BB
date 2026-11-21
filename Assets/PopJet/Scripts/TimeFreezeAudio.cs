@@ -65,9 +65,24 @@ namespace PopJet
             if (vented) PlaySfx(whooshClip);
         }
 
+        float duckUntil = -1f, duck = 1f;
+
+        /// <summary>Ép nhạc nhỏ đi trong seconds giây (GDD §11.2: nổ thì ducking 0.5 giây). Unscaled time.</summary>
+        public void Duck(float seconds, float db = -10f)
+        {
+            duckUntil = Time.unscaledTime + seconds;
+            duck = Mathf.Pow(10f, db / 20f);
+            Apply();
+        }
+
+        /// <summary>true = nhạc đang bị ép nhỏ (test đọc).</summary>
+        public bool IsDucked => Time.unscaledTime < duckUntil;
+
         void Update()
         {
-            if (Mathf.Approximately(amount, target)) return;
+            bool ducking = duckUntil >= 0f;
+            if (ducking && Time.unscaledTime >= duckUntil) duckUntil = -1f;
+            if (Mathf.Approximately(amount, target) && !ducking) return;
             amount = Mathf.MoveTowards(amount, target, speed * Time.unscaledDeltaTime);
             Apply();
         }
@@ -76,7 +91,8 @@ namespace PopJet
         {
             // Nội suy theo thang log để tai nghe thấy đều.
             lowPass.cutoffFrequency = Mathf.Exp(Mathf.Lerp(Mathf.Log(OpenCutoff), Mathf.Log(frozenCutoff), amount));
-            music.volume = baseVolume * Mathf.Lerp(1f, Mathf.Pow(10f, frozenVolumeDb / 20f), amount);
+            float d = duckUntil >= 0f ? duck : 1f;
+            music.volume = baseVolume * d * Mathf.Lerp(1f, Mathf.Pow(10f, frozenVolumeDb / 20f), amount);
         }
 
         void PlaySfx(AudioClip clip)

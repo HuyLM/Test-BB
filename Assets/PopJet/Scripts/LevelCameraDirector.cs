@@ -27,9 +27,30 @@ namespace PopJet
 
         CinemachineCamera lookCam;
         bool looking;
+        Transform followBackup;
+        bool followOverridden;
 
         public bool IsLooking => looking;
         public float BlendSeconds => blendSeconds;
+
+        /// <summary>
+        /// Camera follow tạm theo object khác (bóng ma Gợi ý), null = trả về bóng. Brain chạy unscaled time nên vẫn lia
+        /// được khi thế giới dừng.
+        /// </summary>
+        public void FollowOverride(Transform target)
+        {
+            if (followCam == null) return;
+            if (target != null)
+            {
+                if (!followOverridden) { followBackup = followCam.Follow; followOverridden = true; }
+                followCam.Follow = target;
+            }
+            else if (followOverridden)
+            {
+                followCam.Follow = followBackup;
+                followOverridden = false;
+            }
+        }
 
         void Awake()
         {
@@ -41,9 +62,15 @@ namespace PopJet
             }
         }
 
-        void Start()
+        void Start() { EnsureLookCam(); }
+
+        /// <summary>
+        /// Tạo camera toàn cảnh nếu chưa có. Gọi cả từ Intro và SetLook: GameScreens.Start có thể chạy trước Start của
+        /// script này (cùng thứ tự thực thi), lúc đó camera giới thiệu vẫn phải chạy.
+        /// </summary>
+        void EnsureLookCam()
         {
-            if (followCam == null) return;
+            if (lookCam != null || followCam == null) return;
             var go = new GameObject("CM LookCam");
             go.SetActive(false);
             lookCam = go.AddComponent<CinemachineCamera>();
@@ -83,6 +110,7 @@ namespace PopJet
         /// <summary>Bật/tắt toàn cảnh. Bật thì dừng thế giới (lý do Look).</summary>
         public void SetLook(bool on)
         {
+            EnsureLookCam();
             if (lookCam == null || on == looking) return;
             looking = on;
             if (on) Frame();
@@ -99,6 +127,7 @@ namespace PopJet
         public IEnumerator Intro(Func<bool> skip, Action done)
         {
             TimeController.Set(TimeReason.Intro, true);
+            EnsureLookCam();
             if (lookCam != null)
             {
                 Frame();
@@ -137,6 +166,7 @@ namespace PopJet
             if (looking) TimeController.Set(TimeReason.Look, false);
             looking = false;
             TimeController.Set(TimeReason.Intro, false);
+            FollowOverride(null);
         }
     }
 }

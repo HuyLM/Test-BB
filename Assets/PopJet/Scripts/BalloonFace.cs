@@ -28,6 +28,11 @@ namespace PopJet
         [Tooltip("Gai trong khoảng này (tính từ mặt bóng) thì mắt nhìn về phía nó và bóng sợ hãi.")]
         [SerializeField] float hazardRange = 1.5f;
         [SerializeField] int sortingOrder = 11;
+        [Header("Art AI (tuỳ chọn)")]
+        [Tooltip("12 mặt vẽ sẵn (Art/World1/Faces, thứ tự Face_00 … Face_11). Có đủ 12 thì dùng thay cho mặt dựng bằng hình tròn.")]
+        [SerializeField] Sprite[] faceSprites;
+        [Tooltip("Cạnh ảnh mặt so với đường kính bóng (ảnh cắt rộng 1.3 lần để chứa Zz và vạch sốc).")]
+        [SerializeField] float faceArtScale = 1.3f;
 
         enum Mood { Normal, Aim, Ouch, Scared, Tired, Happy, Sad }
 
@@ -40,6 +45,14 @@ namespace PopJet
         BalloonBounce bounce;
         Transform face;
         SpriteRenderer eyeL, eyeR, shineL, shineR, smile, flat, mouthO;
+        SpriteRenderer faceArt;
+        bool ouchDizzy;
+        float winkUntil, nextWink;
+
+        // Chỉ số trong faceSprites (cùng thứ tự với ô trên tấm Balloon_Faces).
+        const int FNeutral = 0, FHappy = 1, FLaugh = 2, FScared = 3, FDizzy = 4, FSleepy = 5,
+                  FDetermined = 6, FSurprised = 7, FSad = 8, FWink = 9, FWorried = 10, FExcited = 11;
+        bool UseArt => faceSprites != null && faceSprites.Length >= 12;
         Vector2 look;
         float ouchUntil, nextBlink, blinkUntil, nextScan;
         bool nearHazard;
@@ -66,8 +79,13 @@ namespace PopJet
             if (bounce != null) bounce.Bounced -= OnBounce;
         }
 
-        void OnVent(Vector2 hole, Vector2 dir) { ouchUntil = Time.unscaledTime + 0.3f; }
-        void OnBounce(float strength) { if (strength >= 0.8f) ouchUntil = Time.unscaledTime + 0.35f; }
+        void OnVent(Vector2 hole, Vector2 dir) { ouchUntil = Time.unscaledTime + 0.3f; ouchDizzy = false; }
+        void OnBounce(float strength)
+        {
+            if (strength < 0.8f) return;
+            ouchUntil = Time.unscaledTime + (UseArt ? 0.5f : 0.35f);
+            ouchDizzy = true;
+        }
 
         void LateUpdate()
         {
@@ -135,6 +153,7 @@ namespace PopJet
 
         void Apply(Mood mood, float now)
         {
+            if (faceArt != null) { ApplyArt(mood, now); return; }
             Vector2 scaleL = Vector2.one, scaleR = Vector2.one;
             float lift = 0f;
             int mouth = 0; // 0 cười, 1 ngang, 2 mếu, 3 chữ O, 4 cười to
@@ -172,6 +191,34 @@ namespace PopJet
             else if (mouth == 4) SetLocal(smile.transform, new Vector2(0f, -0.13f), new Vector2(0.28f, 0.32f));
         }
 
+        /// <summary>Mặt vẽ sẵn: chọn ô theo biểu cảm, cả mặt dịch theo hướng nhìn; lúc rảnh thỉnh thoảng nháy mắt.</summary>
+        void ApplyArt(Mood mood, float now)
+        {
+            int idx;
+            switch (mood)
+            {
+                case Mood.Aim: idx = FDetermined; break;
+                case Mood.Ouch: idx = ouchDizzy ? FDizzy : FSurprised; break;
+                case Mood.Scared: idx = balloon.HasLeaks ? FScared : FWorried; break;
+                case Mood.Tired: idx = FSleepy; break;
+                case Mood.Happy: idx = Mathf.Repeat(now, 0.6f) < 0.3f ? FExcited : FLaugh; break;
+                case Mood.Sad: idx = FSad; break;
+                default: idx = balloon.Started ? FHappy : FNeutral; break;
+            }
+            if (mood == Mood.Normal)
+            {
+                if (now >= nextWink)
+                {
+                    winkUntil = now + 0.35f;
+                    nextWink = now + Random.Range(4f, 8f);
+                }
+                if (now < winkUntil) idx = FWink;
+            }
+            faceArt.sprite = faceSprites[idx];
+            float lift = mood == Mood.Tired ? -0.02f : 0f;
+            faceArt.transform.localPosition = new Vector3(look.x, look.y + lift, 0f);
+        }
+
         void PlaceEye(SpriteRenderer eye, SpriteRenderer shine, Vector2 pos, Vector2 scale)
         {
             SetLocal(eye.transform, pos, Vector2.Scale(EyeSize, scale));
@@ -190,6 +237,15 @@ namespace PopJet
             if (visual == null || circleSprite == null) return;
             face = new GameObject("Face").transform;
             face.SetParent(visual, false);
+
+            if (UseArt)
+            {
+                faceArt = Part("FaceArt", faceSprites[FNeutral], Color.white, sortingOrder + 1);
+                float w = faceSprites[FNeutral].bounds.size.x;
+                if (w > 1e-4f) faceArt.transform.localScale = Vector3.one * (faceArtScale / w);
+                nextWink = Time.unscaledTime + Random.Range(2f, 5f);
+                return; // thân bóng vẽ sẵn đã có vệt sáng
+            }
 
             var highlight = Part("Highlight", circleSprite, new Color(1f, 1f, 1f, 0.55f), sortingOrder);
             SetLocal(highlight.transform, new Vector2(-0.2f, 0.22f), new Vector2(0.22f, 0.11f));

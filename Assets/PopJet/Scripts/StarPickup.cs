@@ -10,6 +10,9 @@ namespace PopJet
     [RequireComponent(typeof(Collider2D))]
     public class StarPickup : MonoBehaviour
     {
+        [Tooltip("Object con chứa hình Sao. Có thì chỉ hình xoay, collider đứng yên (vật lý không phụ thuộc khung hình, " +
+                 "lời giải phát lại ra y hệt). Để trống thì xoay cả object.")]
+        [SerializeField] Transform visual;
         [SerializeField] float spinDegreesPerSecond = 40f;
         [SerializeField] float popSeconds = 0.2f;
 
@@ -25,6 +28,16 @@ namespace PopJet
             col.isTrigger = true;
             renderers = GetComponentsInChildren<Renderer>();
             baseScale = transform.localScale;
+            if (visual == null) visual = transform;
+        }
+
+        /// <summary>Đã nhặt ở lượt trước cột mốc (chơi lại từ cột mốc): ẩn luôn, không báo lại.</summary>
+        public void HideCollected()
+        {
+            taken = true;
+            col.enabled = false;
+            foreach (var r in renderers) r.enabled = false;
+            enabled = false;
         }
 
         void OnTriggerEnter2D(Collider2D other)
@@ -41,7 +54,7 @@ namespace PopJet
         {
             if (!taken)
             {
-                transform.Rotate(0f, 0f, spinDegreesPerSecond * Time.deltaTime);
+                visual.Rotate(0f, 0f, spinDegreesPerSecond * Time.deltaTime);
                 return;
             }
             takenTime += Time.deltaTime;
